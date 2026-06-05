@@ -52,9 +52,14 @@ Actions tab. The first deploy is already live and verified.
 
 - Server: Amazon Linux 2023, **Apache (httpd)** — not nginx. **No Docker**; the
   convention is static folders + pm2-managed Node processes. Match that style.
-- Node 20 (via nvm) on the server. The backend currently has zero dependencies
-  (plain `http` module). When you add deps, commit a `package-lock.json` — the
-  deploy runs `npm ci --omit=dev` only if a lockfile is present.
+- Node 22 LTS (via nvm; pm2 runs under it). The backend currently has zero
+  dependencies (plain `http` module). When you add deps, commit a
+  `package-lock.json` — the deploy runs `npm ci --omit=dev` only if a lockfile
+  is present.
+- The backend loads `.env` via `node --env-file-if-exists` (requires Node
+  ≥22.9). The deploy writes that `.env` from the `LLM_API_KEY` secret as
+  `ANTHROPIC_API_KEY`. `/convo/api/health` reports `hasApiKey` to confirm it
+  loaded (without exposing the key).
 - Secrets/env: copy `.env.example` → real `.env` (gitignored). Document any new
   env var you introduce.
 

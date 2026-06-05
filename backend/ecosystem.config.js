@@ -7,11 +7,15 @@ module.exports = {
       name: 'convo-api',
       script: 'server.js',
       cwd: '/home/ec2-user/convo-api',
-      // Load /home/ec2-user/convo-api/.env into process.env at startup.
-      // Node >=20.12 supports --env-file-if-exists (no-op if the file is absent,
-      // e.g. local dev). The deploy writes .env from the LLM_API_KEY secret.
-      node_args: '--env-file-if-exists=.env',
+      // Run as a single fork process (not cluster) so a failed start can't hang
+      // a deploy's graceful reload.
+      exec_mode: 'fork',
       instances: 1,
+      // Load /home/ec2-user/convo-api/.env into process.env at startup. The
+      // deploy writes this file from the LLM_API_KEY secret. Requires Node
+      // >=22.9 for --env-file-if-exists (no-op when the file is absent, e.g.
+      // local dev).
+      node_args: '--env-file-if-exists=.env',
       autorestart: true,
       env: {
         NODE_ENV: 'production',
