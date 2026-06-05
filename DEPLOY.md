@@ -53,6 +53,7 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 | `EC2_HOST` | `cogsciresearch.vassar.edu` |
 | `EC2_USER` | `ec2-user` |
 | `EC2_SSH_KEY` | A private SSH key whose public half is in `~ec2-user/.ssh/authorized_keys` |
+| `LLM_API_KEY` | Anthropic API key. The deploy writes it to `~/convo-api/.env` as `ANTHROPIC_API_KEY` (mode 600). |
 
 **Recommended:** generate a dedicated deploy key rather than reusing the instance
 `.pem`, so it can be rotated/revoked independently:

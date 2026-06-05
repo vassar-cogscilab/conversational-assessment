@@ -52,10 +52,27 @@ jobs:
 
       - name: Deploy backend
         run: |
-          rsync -az --delete --exclude node_modules \
+          rsync -az --delete --exclude node_modules --exclude .env \
             -e "ssh -i ~/.ssh/deploy_key" \
             backend/ \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${REMOTE_BACKEND}/"
+
+      - name: Write backend .env on server
+        env:
+          # Source secret is LLM_API_KEY; written as ANTHROPIC_API_KEY (the var
+          # the Anthropic SDK reads by default). Add more vars to the heredoc
+          # below as the backend grows.
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -z "$LLM_API_KEY" ]; then
+            echo "::warning::LLM_API_KEY secret is empty; leaving existing .env untouched"
+            exit 0
+          fi
+          # Pipe over stdin (key never appears in argv) and create with umask 077 (file mode 600).
+          printf 'ANTHROPIC_API_KEY=%s\n' "$LLM_API_KEY" \
+            | ssh -i ~/.ssh/deploy_key \
+                "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+                "umask 077 && cat > '${REMOTE_BACKEND}/.env'"
 
       - name: Install deps and (re)start backend
         run: |

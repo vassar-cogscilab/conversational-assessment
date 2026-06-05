@@ -15,7 +15,14 @@ const server = http.createServer((req, res) => {
 
   if (req.url === '/' || req.url === '/health') {
     res.writeHead(200);
-    res.end(JSON.stringify({ ok: true, service: 'convo-api' }));
+    // hasApiKey lets us confirm the .env was loaded without exposing the key.
+    res.end(
+      JSON.stringify({
+        ok: true,
+        service: 'convo-api',
+        hasApiKey: Boolean(process.env.ANTHROPIC_API_KEY),
+      }),
+    );
     return;
   }
 
