@@ -12,7 +12,7 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 
 # Load /home/ec2-user/convo-api/.env into the environment at startup. The deploy
 # writes this file from the LLM_API_KEY secret. No-op when the file is absent
@@ -31,6 +31,15 @@ def health():
         service="convo-api",
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# API Route that returns the string data
+@app.route('/api/get-string')
+def get_string():
+    return jsonify(message="Hello from the Flask API!")
 
 
 @app.errorhandler(404)
