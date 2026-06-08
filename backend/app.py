@@ -21,6 +21,15 @@ load_dotenv()
 
 app = Flask(__name__)
 
+# Route to serve the main HTML page
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# API Route that returns the data string
+@app.route('/api/get-string')
+def get_string():
+    return jsonify(server_message="Hello dynamically via JavaScript!")
 
 @app.get("/")
 @app.get("/health")
