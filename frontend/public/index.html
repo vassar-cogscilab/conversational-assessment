@@ -1,57 +1,137 @@
 <!doctype html>
-<html lang="en">
+<html
+  lang="en"
+  data-ws-project="cb0782e3-c04f-4e85-8634-0bd9d271ed54"
+  data-ws-last-published="2026-06-08T18:22:43.543Z"
+>
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Conversational Assessment</title>
-    <style>
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        max-width: 40rem;
-        margin: 4rem auto;
-        padding: 0 1rem;
-        line-height: 1.5;
-        color: #1a1a1a;
-      }
-      code { background: #f0f0f0; padding: 0.1em 0.3em; border-radius: 3px; }
-      #status { font-weight: 600; }
-    </style>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/assets/static/app_generated_index-6937cd5a.h2f5MEAT.css"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta property="og:url" content="https://url/" />
+    <meta property="og:title" content="Home" />
+    <meta property="og:type" content="website" />
+    <title>Home</title>
   </head>
-  <body>
-    <h1>Conversational Assessment</h1>
-    <p>Frontend placeholder — served as static files from <code>/convo/</code>.</p>
-    <p>Backend health check: <span id="status">checking…</span></p>
-
-    <script>
-      // Relative path resolves to /convo/api/health behind Apache.
-      fetch('api/health')
-        .then((r) => r.json())
-        .then((d) => {
-          document.getElementById('status').textContent = d.ok
-            ? 'OK ✓ (' + d.service + ')'
-            : 'unexpected response';
-        })
-        .catch(() => {
-          document.getElementById('status').textContent = 'unreachable ✗';
-        });
+  <body class="w-element c11gdwrw cx2jqu4">
+    <div
+      class="w-element curqten c1adoxo c18rvpg3 cuae8qz cioqv2c c1szfx8m c9szjk4 c1f0gpz0 c1u5icyt c1um5aby c1l1cps8 c4m5okv cm8u2iz cm1684t c1te4196"
+    >
+      <input
+        class="w-element c1bj2of1 c1qpqsa0 cdqs5cl c1d42emh c1pfcddh c14pwmyp cqrvans cybiu6h c6adr82 c17wlt0s cs4gz2l cg6ozw1 c1u0wfpb c1x2gx8x c120apeh c1vhejdg c11areoc c1hy3kuh c1wbhqse c1tkp8yk"
+      />
+    </div>
+    <div class="w-element curqten c1adoxo c18rvpg3 chr4vn7 c964jzm">
+      <a
+        href="/"
+        class="w-element cqm8fdw cybiu6h cnda3em c51s2vp c1rkimkl c5jtwr7 cbb3lgc c1vsw8rn ctm4y4h cioqv2c c1szfx8m c1cjws1c"
+        >{KATALLM}</a
+      >
+      <div
+        class="w-element c5jtwr7 c1adoxo c18rvpg3 czlqdox cln5azv c19x6ft9 cvpdr3p c1cjws1c"
+      >
+        <a
+          href="/"
+          class="w-element c1wntamm c51s2vp c6nner0 cybiu6h cucsod4 c89hoj4 ctatpff c9bvk1j c1svxxv8 c10nilu0 ctm4y4h c14eywfj"
+          >Home</a
+        ><a
+          href="/instructor"
+          class="w-element c1wntamm c51s2vp c6nner0 cybiu6h chddmvs c89hoj4 ctatpff c9bvk1j c1svxxv8 c10nilu0 ctm4y4h c14eywfj"
+          >Instructor</a
+        >
+      </div>
+    </div>
+    <div
+      class="w-element curqten c1szfx8m cwiv6yd cbb3lgc c1vsw8rn cuae8qz cc44i80"
+    >
+      <div
+        class="w-element c1qde9vr cybiu6h c11areoc c1hy3kuh c1wbhqse c1tkp8yk c5jtwr7 c1ta4pzh c1n9rccx ch42vzu c1szfx8m cioqv2c c17njxma clfi7a9 c1rkimkl c1j7nfji"
+      >
+        {AI_Message}
+      </div>
+      <div
+        class="w-element c1qde9vr cybiu6h c11areoc c1hy3kuh c1wbhqse c1tkp8yk c5jtwr7 c1ta4pzh c1n9rccx ch42vzu c1szfx8m cioqv2c c1n7ww9g cvdwl4l c11gdwrw c1amoqfa c1j7nfji"
+      >
+        {User_Message}
+      </div>
+      <div
+        class="w-element c1qde9vr cybiu6h c11areoc c1hy3kuh c1wbhqse c1tkp8yk c5jtwr7 c1ta4pzh c1n9rccx ch42vzu c1szfx8m cioqv2c c17njxma clfi7a9 c1rkimkl c1j7nfji"
+      >
+        {AI_Message}
+      </div>
+      <div
+        class="w-element c1qde9vr cybiu6h c11areoc c1hy3kuh c1wbhqse c1tkp8yk c5jtwr7 c1ta4pzh c1n9rccx ch42vzu c1szfx8m cioqv2c c1n7ww9g cvdwl4l c11gdwrw c1amoqfa c1j7nfji"
+      >
+        {User_Message}
+      </div>
+      <div
+        class="w-element c1qde9vr cybiu6h c11areoc c1hy3kuh c1wbhqse c1tkp8yk c5jtwr7 c1ta4pzh c1n9rccx ch42vzu c1szfx8m cioqv2c c17njxma clfi7a9 c1rkimkl c1j7nfji"
+      >
+        {AI_Message}
+      </div>
+      <div
+        class="w-element c1qde9vr cybiu6h c11areoc c1hy3kuh c1wbhqse c1tkp8yk c5jtwr7 c1ta4pzh c1n9rccx ch42vzu c1szfx8m cioqv2c c1n7ww9g cvdwl4l c11gdwrw c1amoqfa c1j7nfji"
+      >
+        {User_Message}
+      </div>
+      <div
+        class="w-element c1qde9vr cybiu6h c11areoc c1hy3kuh c1wbhqse c1tkp8yk c5jtwr7 c1ta4pzh c1n9rccx ch42vzu c1szfx8m cioqv2c c17njxma clfi7a9 c1rkimkl c1j7nfji"
+      >
+        {AI_Message}
+      </div>
+    </div>
+    <div class="w-element cfpzuex cvx8as3 cfkxy5b cqrvans"></div>
+    <script id="vike_pageContext" type="application/json">
+      {
+        "_urlRewrite": null,
+        "pageId": "/pages/index",
+        "routeParams": {},
+        "data": {
+          "url": "https://url/",
+          "system": {
+            "params": {},
+            "search": {},
+            "origin": "https://url",
+            "pathname": "/"
+          },
+          "resources": {},
+          "pageMeta": {
+            "title": "Home",
+            "description": "!undefined",
+            "excludePageFromSearch": "!undefined",
+            "language": "!undefined",
+            "socialImageAssetName": "!undefined",
+            "socialImageUrl": "!undefined",
+            "status": "!undefined",
+            "redirect": "!undefined",
+            "content": "!undefined",
+            "custom": []
+          }
+        }
+      }
     </script>
-        <h1>Welcome</h1>
-    <button id="fetch-btn">Get String</button>
-    <p id="output"></p>
-
-    <script>
-        document.getElementById('fetch-btn').addEventListener('click', () => {
-            // Fetch data asynchronously from the Flask route
-            fetch('/api/get-string')
-                .then(response => response.json())
-                .then(data => {
-                    // Update the paragraph with the string from backend
-                    document.getElementById('output').textContent = data.message;
-                })
-                .catch(error => console.error('Error fetching string:', error));
-        });
+    <script id="vike_globalContext" type="application/json">
+      {}
     </script>
+    <script
+      src="/assets/entries/entry-server-routing.CiRwjZLR.js"
+      type="module"
+      async
+    ></script>
+    <link
+      rel="modulepreload"
+      href="/assets/entries/pages_index.BAK1aTwQ.js"
+      as="script"
+      type="text/javascript"
+    /><link
+      rel="modulepreload"
+      href="/assets/chunks/chunk-BR75Kv1E.js"
+      as="script"
+      type="text/javascript"
+    />
   </body>
 </html>
-
-
