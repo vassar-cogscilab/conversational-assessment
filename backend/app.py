@@ -32,16 +32,6 @@ def health():
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-# API Route that returns the string data
-@app.route('/api/get-string')
-def get_string():
-    return jsonify(message="Hello from the Flask API!")
-
-
 @app.errorhandler(404)
 def not_found(_err):
     return jsonify(error="not found"), 404
