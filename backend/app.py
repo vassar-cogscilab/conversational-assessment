@@ -21,16 +21,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Route to serve the main HTML page
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-# API Route that returns the data string
-@app.route('/get-string')
-def get_string():
-    return jsonify(server_message="Hello dynamically from the backend!")
-
 @app.get("/")
 @app.get("/health")
 def health():
@@ -41,10 +31,15 @@ def health():
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
+# API Route that returns the data string
+@app.route('/get-string')
+def get_string():
+    return jsonify(server_message="Hello there from the backend!")
+
+
 @app.errorhandler(404)
 def not_found(_err):
     return jsonify(error="not found"), 404
-
 
 if __name__ == "__main__":
     # Bind to localhost only — public traffic must come through Apache.
