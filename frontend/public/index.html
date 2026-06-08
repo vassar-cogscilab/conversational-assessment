@@ -35,11 +35,13 @@
           document.getElementById('status').textContent = 'unreachable ✗';
         });
     </script>
+
+    <!-- 1. Create an HTML element with a unique ID -->
+    <p><span id="output"></span></p>
     
-    <p id="output">Loading string...</p>
     <script>
         // Make an asynchronous request to the backend endpoint
-        fetch('/api/get-string')
+        fetch('api/get-string')
             .then((r) => r.json())
             .then((d) => {
                 // Update the DOM element with the string from the backend
