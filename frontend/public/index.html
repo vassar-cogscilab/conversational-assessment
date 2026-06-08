@@ -36,6 +36,8 @@
         });
     </script>
 
+    <p id="output">Loading string...</p>
+      
       <script>
         // Make an asynchronous request to the backend endpoint
         fetch('/api/get-string')
@@ -46,7 +48,7 @@
             })
             .catch(error => console.error('Error fetching string:', error));
     </script>
-    
+
   </body>
 </html>
 

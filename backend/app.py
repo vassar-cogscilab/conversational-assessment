@@ -27,7 +27,7 @@ def home():
     return render_template('index.html')
 
 # API Route that returns the data string
-@app.route('/api/get-string')
+@app.route('/get-string')
 def get_string():
     return jsonify(server_message="Hello dynamically via JavaScript!")
 
