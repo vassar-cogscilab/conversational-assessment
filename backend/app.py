@@ -29,7 +29,7 @@ def home():
 # API Route that returns the data string
 @app.route('/get-string')
 def get_string():
-    return jsonify(server_message="Hello dynamically via JavaScript!")
+    return jsonify(server_message="Hello dynamically from the backend!")
 
 @app.get("/")
 @app.get("/health")
