@@ -35,9 +35,7 @@
           document.getElementById('status').textContent = 'unreachable ✗';
         });
     </script>
-
-    <p id="output">Loading string...</p>
-      
+      <p id="output">Loading string...</p>
       <script>
         // Make an asynchronous request to the backend endpoint
         fetch('/api/get-string')
@@ -47,8 +45,7 @@
                 document.getElementById('output').innerText = data.server_message;
             })
             .catch(error => console.error('Error fetching string:', error));
-    </script>
-
+      </script>
   </body>
 </html>
 
