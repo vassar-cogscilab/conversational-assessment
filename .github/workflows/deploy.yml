@@ -92,3 +92,21 @@ jobs:
               pm2 startOrReload ecosystem.config.js --update-env
               pm2 save
             '
+
+      - name: Health check
+        # pm2 can report "online" even when the app crash-loops, so verify the
+        # backend actually answers on :3001 before calling the deploy good.
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" bash -lc '
+              for i in $(seq 1 10); do
+                if curl -fsS localhost:3001/health | grep -q "\"ok\":true"; then
+                  echo "backend healthy"; exit 0
+                fi
+                echo "waiting for backend... ($i)"; sleep 2
+              done
+              echo "::error::backend did not become healthy on :3001"
+              export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+              pm2 logs convo-api --lines 30 --nostream || true
+              exit 1
+            '
