@@ -1,24 +1,30 @@
 // pm2 process definition for the backend. The deploy workflow runs
 //   pm2 startOrReload ecosystem.config.js --update-env
 // from the deployed backend directory on the EC2 box.
+//
+// The backend is a Python/Flask app served by gunicorn. pm2 (running under
+// Node/nvm) supervises the gunicorn process — same single-pm2-service
+// convention as before, just a different runtime.
 module.exports = {
   apps: [
     {
       name: 'convo-api',
-      script: 'server.js',
+      // Run gunicorn straight from the project virtualenv. The deploy creates
+      // ./venv and pip-installs requirements.txt into it.
+      script: './venv/bin/gunicorn',
+      // interpreter "none" => exec the script directly instead of wrapping it
+      // with node. gunicorn loads the Flask app object `app` from app.py and
+      // binds to localhost only — public traffic must come through Apache.
+      interpreter: 'none',
+      args: 'app:app --bind 127.0.0.1:3001 --workers 2',
       cwd: '/home/ec2-user/convo-api',
-      // Run as a single fork process (not cluster) so a failed start can't hang
-      // a deploy's graceful reload.
+      // Single fork process so a failed start can't hang a deploy's reload.
       exec_mode: 'fork',
       instances: 1,
-      // Load /home/ec2-user/convo-api/.env into process.env at startup. The
-      // deploy writes this file from the LLM_API_KEY secret. Requires Node
-      // >=22.9 for --env-file-if-exists (no-op when the file is absent, e.g.
-      // local dev).
-      node_args: '--env-file-if-exists=.env',
       autorestart: true,
       env: {
-        NODE_ENV: 'production',
+        // app.py also load_dotenv()s the .env the deploy writes; PORT here is
+        // informational (gunicorn binds via --bind above).
         PORT: 3001,
       },
     },

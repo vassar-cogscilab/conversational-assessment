@@ -5,15 +5,15 @@ Guidance for working in this repository.
 ## What this is
 
 A conversational assessment app. It will have a **web frontend** and a **simple
-Node backend**. As of now only the deployment scaffolding exists — the actual app
-is yet to be built. The placeholders (`frontend/public/index.html`,
-`backend/server.js`) are intentionally minimal and meant to be replaced.
+Python/Flask backend**. As of now only the deployment scaffolding exists — the
+actual app is yet to be built. The placeholders (`frontend/public/index.html`,
+`backend/app.py`) are intentionally minimal and meant to be replaced.
 
 ## Repository layout
 
 ```
 frontend/public/   Static frontend (placeholder). Becomes a real build later.
-backend/           Node backend run under pm2 as "convo-api" (port 3001).
+backend/           Python/Flask backend (gunicorn) run under pm2 as "convo-api" (port 3001).
 deploy/            Apache reverse-proxy config installed on the server.
 .github/workflows/ deploy.yml — push-to-main auto-deploy.
 DEPLOY.md          Full deployment runbook (server setup, secrets, ops).
@@ -28,7 +28,7 @@ non-negotiables:
 | URL | Served by |
 | --- | --- |
 | `https://cogsciresearch.vassar.edu/convo/` | Static files in `/var/www/html/convo/` (Apache, directly) |
-| `https://cogsciresearch.vassar.edu/convo/api/` | Apache proxy → `http://127.0.0.1:3001` (Node + pm2) |
+| `https://cogsciresearch.vassar.edu/convo/api/` | Apache proxy → `http://127.0.0.1:3001` (Flask/gunicorn + pm2) |
 
 1. **Frontend must use base path `/convo/`.** When you add a bundler, set it
    (Vite `base: '/convo/'`, CRA `"homepage": "/convo"`, Next `basePath: '/convo'`)
@@ -51,13 +51,14 @@ Actions tab. The first deploy is already live and verified.
 ## Environment / runtime notes
 
 - Server: Amazon Linux 2023, **Apache (httpd)** — not nginx. **No Docker**; the
-  convention is static folders + pm2-managed Node processes. Match that style.
-- Node 22 LTS (via nvm; pm2 runs under it). The backend currently has zero
-  dependencies (plain `http` module). When you add deps, commit a
-  `package-lock.json` — the deploy runs `npm ci --omit=dev` only if a lockfile
-  is present.
-- The backend loads `.env` via `node --env-file-if-exists` (requires Node
-  ≥22.9). The deploy writes that `.env` from the `LLM_API_KEY` secret as
+  convention is static folders + pm2-managed processes. Match that style — pm2
+  (running under Node/nvm) supervises the Python process too.
+- The backend is **Python/Flask served by gunicorn**, run from a project
+  virtualenv (`backend/venv`). Deps are pinned in `backend/requirements.txt`;
+  the deploy creates the venv if missing and `pip install`s into it on every
+  push. pm2 launches `./venv/bin/gunicorn app:app` (see `ecosystem.config.js`).
+- The backend loads `.env` via `python-dotenv` (`load_dotenv()` in `app.py`).
+  The deploy writes that `.env` from the `LLM_API_KEY` secret as
   `ANTHROPIC_API_KEY`. `/convo/api/health` reports `hasApiKey` to confirm it
   loaded (without exposing the key).
 - Secrets/env: copy `.env.example` → real `.env` (gitignored). Document any new

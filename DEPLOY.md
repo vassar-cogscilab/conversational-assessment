@@ -6,7 +6,7 @@ Amazon Linux 2023) and served under a subpath:
 | URL | Served by |
 | --- | --- |
 | `https://cogsciresearch.vassar.edu/convo/` | Static files in `/var/www/html/convo/` (Apache, directly) |
-| `https://cogsciresearch.vassar.edu/convo/api/` | Apache `ProxyPass` → `http://127.0.0.1:3001` (Node + pm2, app `convo-api`) |
+| `https://cogsciresearch.vassar.edu/convo/api/` | Apache `ProxyPass` → `http://127.0.0.1:3001` (Flask/gunicorn + pm2, app `convo-api`) |
 
 Deploys are automatic: pushing to `main` runs `.github/workflows/deploy.yml`,
 which rsyncs the frontend and backend to the box and reloads pm2. It can also be
@@ -42,6 +42,11 @@ Run once on the box (`ssh -i ~/.ssh/jpsychaws.pem ec2-user@cogsciresearch.vassar
    pm2 save
    ```
 
+> The backend runs on **Python 3 + gunicorn** inside a virtualenv
+> (`~/convo-api/venv`). `python3` and the `venv` module ship with Amazon Linux
+> 2023, so no extra install is needed — the deploy creates and populates the
+> venv automatically. pm2 still supervises the process and runs under Node/nvm.
+
 That's it — the GitHub Actions workflow handles the actual app deploy from then on.
 
 ## One-time GitHub setup
@@ -73,8 +78,9 @@ On push to `main`, the workflow:
 1. Checks out the repo.
 2. (Optional, currently disabled) builds the frontend — see below.
 3. `rsync`s `frontend/public/` → `/var/www/html/convo/` (`--delete`).
-4. `rsync`s `backend/` → `~/convo-api/` (excludes `node_modules`).
-5. SSHes in, runs `npm ci --omit=dev` if a lockfile exists, then
+4. `rsync`s `backend/` → `~/convo-api/` (excludes `venv`, `__pycache__`, `.env`).
+5. SSHes in, creates the `venv` if missing, `pip install`s
+   `requirements.txt` into it, then runs
    `pm2 startOrReload ecosystem.config.js` and `pm2 save`.
 
 ## Adding a real frontend (bundler)
@@ -99,8 +105,12 @@ unknown `/convo/*` paths fall back to `index.html`. Ask when you get there.
 
 ```bash
 pm2 status                 # is convo-api running?
-pm2 logs convo-api         # tail backend logs
+pm2 logs convo-api         # tail backend logs (gunicorn stdout/stderr)
 pm2 restart convo-api      # manual restart
 curl -s localhost:3001/health           # backend directly
 curl -s https://cogsciresearch.vassar.edu/convo/api/health   # through Apache
+
+# Local dev (from backend/):
+python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+./venv/bin/python app.py                 # Flask dev server on :3001
 ```

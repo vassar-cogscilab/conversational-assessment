@@ -52,7 +52,8 @@ jobs:
 
       - name: Deploy backend
         run: |
-          rsync -az --delete --exclude node_modules --exclude .env \
+          rsync -az --delete \
+            --exclude venv --exclude __pycache__ --exclude '*.pyc' --exclude .env \
             -e "ssh -i ~/.ssh/deploy_key" \
             backend/ \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${REMOTE_BACKEND}/"
@@ -79,10 +80,15 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" bash -lc '
               set -e
+              # nvm is sourced so pm2 (a Node tool) is on PATH; the app itself
+              # runs on Python via the venv below.
               export NVM_DIR="$HOME/.nvm"
               [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
               cd '"${REMOTE_BACKEND}"'
-              if [ -f package-lock.json ]; then npm ci --omit=dev; fi
+              # Create the virtualenv once, then install/upgrade pinned deps.
+              if [ ! -d venv ]; then python3 -m venv venv; fi
+              ./venv/bin/pip install --quiet --upgrade pip
+              ./venv/bin/pip install --quiet -r requirements.txt
               pm2 startOrReload ecosystem.config.js --update-env
               pm2 save
             '
