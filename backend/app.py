@@ -38,6 +38,11 @@ def health():
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
+# API Route that returns the data string
+@app.route('/get-string')
+def get_string():
+    return jsonify(server_message=messages)
+
 @app.errorhandler(404)
 def not_found(_err):
     return jsonify(error="not found"), 404
@@ -77,11 +82,6 @@ messages = [
 system_prompt = """You are a helpful statistics assistant that ONLY uses the content of the pdfdocument to engage 
 in a 5-TURN dialogue with the user. Converse with the user, asking questions to assess their deep understanding of 
 this material?"""
-
-# API Route that returns the data string
-@app.route('/get-string')
-def get_string():
-    return jsonify(server_message=messages)
 
 def ask_claude():
     response = client.beta.messages.create(
