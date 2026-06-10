@@ -21,7 +21,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-@app.get("/api/health")
+@app.get("/")
+@app.get("/health")
 def health():
     # hasApiKey lets us confirm the .env was loaded without exposing the key.
     return jsonify(
@@ -31,7 +32,7 @@ def health():
     )
 
 # API Route that returns the data string
-@app.route('/api/get-string', methods=['POST'])
+@app.route('/get-string', methods=['POST'])
 def get_string():
     user_data = request.get.json()
     user_input = user_data.get('input', '')
