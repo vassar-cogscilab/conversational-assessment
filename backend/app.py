@@ -33,6 +33,7 @@ def health():
 
 # API Route that returns the data string
 @app.route('/get-string', methods=['POST'])
+@app.route('/api/get-string', methods=['POST'])
 def get_string():
     user_data = request.get_json()
     user_input = user_data.get('input', '')
