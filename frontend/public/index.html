@@ -34,6 +34,32 @@
         .catch(() => {
           document.getElementById('status').textContent = 'unreachable ✗';
         });
+
+      // 1. Define your text payload
+      const dataIn = {
+        message: "This is the text I want to add to the API"
+      };
+
+      // 2. Make the API request
+      fetch('api/get-string', {
+        method: 'PUT', // Use 'PUT' if updating existing text
+        headers: {
+          'Content-Type': 'application/json' // Tells the server to expect JSON
+        },
+        body: JSON.stringify(dataPayload) // Converts JS object to string
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not OK');
+        }
+        return response.json(); // Parses the server's response
+      })
+      .then(data => {
+        console.log('Success! Text added:', data);
+      })
+      .catch(error => {
+        console.error('Error sending text:', error);
+      });
     </script>
   </body>
 </html>
