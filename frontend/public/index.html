@@ -47,7 +47,7 @@
         document.getElementById('dataForm').addEventListener('submit', function(event) {
           event.preventDefault();
           const formData = new FormData(event.target);
-          fetch('api/health', {
+          fetch('api/get-string', {
               method: 'POST',
               body: formData
           })
