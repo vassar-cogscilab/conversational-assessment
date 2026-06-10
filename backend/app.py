@@ -12,7 +12,7 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 
 # Load /home/ec2-user/convo-api/.env into the environment at startup. The deploy
 # writes this file from the LLM_API_KEY secret. No-op when the file is absent
@@ -32,9 +32,15 @@ def health():
     )
 
 # API Route that returns the data string
-@app.route('/get-string')
+@app.route('/get-string', methods=['POST'])
 def get_string():
-    return jsonify(server_message="hello from the backend")
+    user_data = request.get.json()
+    user_input = user_data.get('input', '')
+
+    return jsonify(
+        server_message="hello from the backend",
+        you_sent=user_input
+        )# Send it back to confirm it worked!
 
 @app.errorhandler(404)
 def not_found(_err):
