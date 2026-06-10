@@ -21,7 +21,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-
 @app.get("/")
 @app.get("/health")
 def health():
@@ -31,6 +30,11 @@ def health():
         service="convo-api",
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
+
+# API Route that returns the data string
+@app.route('/get-string')
+def get_string():
+    return jsonify(server_message="hello from the backend")
 
 @app.errorhandler(404)
 def not_found(_err):
