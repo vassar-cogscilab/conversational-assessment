@@ -32,7 +32,7 @@ def health():
     )
 
 # API Route that returns the data string
-@app.route('/get-string', methods=['POST'])
+@app.route('/get-string/', methods=['POST'])
 def get_string():
     user_data = request.get.json()
     user_input = user_data.get('input', '')
@@ -40,7 +40,7 @@ def get_string():
     return jsonify(
         server_message="hello from the backend",
         you_sent=user_input
-        )# Send it back to confirm it worked!
+    )# Send it back to confirm it worked!
 
 @app.errorhandler(404)
 def not_found(_err):
