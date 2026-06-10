@@ -45,28 +45,28 @@
    
    <script>
       document.getElementById('myForm').addEventListener('submit', async function(e) {
-      e.preventDefault(); // Prevents the default page refresh
+        e.preventDefault(); // Prevents the default page refresh
 
-      // Gather the form data
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
+        // Gather the form data
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
 
-      try {
-        // Send data to the backend
-        const response = await fetch('api/get-string', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json' // Tells the server we are sending JSON
-        },
-        body: JSON.stringify(data) // Converts JS object to a string
+        try {
+          // Send data to the backend
+          const response = await fetch('/convo/api/get-string', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json' // Tells the server we are sending JSON
+          },
+          body: JSON.stringify(data) // Converts JS object to a string
+          });
+
+          const result = await response.json();
+          console.log('Success:', result);
+          } catch (error) {
+          console.error('Error sending data:', error);
+          }
         });
-
-        const result = await response.json();
-        console.log('Success:', result);
-        } catch (error) {
-        console.error('Error sending data:', error);
-        }
-      });
     </script>
   </body>
 </html>
