@@ -31,9 +31,12 @@ def health():
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
+@app.route('/output')
+def get_output():
+    return jsonify(server_message="hello from the backend")
+
 # API Route that returns the data string
-@app.route('/get-string', methods=['POST'])
-@app.route('/api/get-string', methods=['POST'])
+@app.route('/string', methods=['GET', 'POST'])
 def get_string():
     user_data = request.get_json()
     user_input = user_data.get('input', '')
