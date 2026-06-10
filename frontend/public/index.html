@@ -24,7 +24,7 @@
 
     <script>
       // Relative path resolves to /convo/api/health behind Apache.
-      fetch('/api/health')
+      fetch('api/health')
         .then((r) => r.json())
         .then((d) => {
           document.getElementById('status').textContent = d.ok
@@ -53,7 +53,7 @@
 
       try {
         // Send data to the backend
-        const response = await fetch('/api/get-string', {
+        const response = await fetch('api/get-string', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json' // Tells the server we are sending JSON
