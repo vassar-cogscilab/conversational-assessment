@@ -23,10 +23,7 @@ import json
 # writes this file from the LLM_API_KEY secret. No-op when the file is absent
 # (e.g. local dev without a .env).
 
-load_dotenv(dotenv_path='/home/ec2-user/convo-api/.env')
-
-# Access your variables
-api_key = os.getenv('LLM_API_KEY')
+load_dotenv()
 
 app = Flask(__name__)
 
