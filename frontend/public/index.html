@@ -279,7 +279,7 @@
         };
 
         // Send the data to your backend
-        fetch('api/health', {
+        fetch('api/string', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json' 
@@ -299,7 +299,7 @@
         })
         .catch(err => {
             console.error("Error:", err);
-            appendMessage("Error: Could not reach the backend AI server. Make sure it is running on port 3001.", "assistant");
+            appendMessage("Error: Could not reach the backend AI server.", "assistant");
         })
         .finally(() => {
             // Re-enable the button so the user can type again
