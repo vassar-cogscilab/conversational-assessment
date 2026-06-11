@@ -1,327 +1,41 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CourseKata AI</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-        display:block;
-        min-height:100%;
-        grid-template-rows:auto;
-        grid-template-columns:1fr;
-        font-family:Arial,Roboto,sans-serif;
-        font-size:16px;line-height:1.2;
-        overflow: hidden;
-    }
-
-    .app {
-      width: min(900px, 100%);
-      height: 100vh;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      background: #ffffff;
-    }
-    header {
-      padding: 22px 22px;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header-left h1 {
-      margin: 0;
-      font-size: 3em;
-      line-height: 1.25;
-      color: #0096d9;
-      cursor: default;
-      font-family: Inter,Roboto,Helvetica Neue,Arial Nova,Nimbus Sans,Arial,sans-serif;
-    }
-
-    .header-right {
-      display: flex;
-      column-gap: 20px;
-      flex-direction: row;
-    }
-
-     #student-press{
-      font-size:30px;
-      font-weight:600;
-      color: #0096d9;
-      transition-timing-function:ease;
-      transition-duration:.4s;
-      font-family: Inter,Roboto,Helvetica Neue,Arial Nova,Nimbus Sans,Arial,sans-serif;
-    }
-
-    #student-press:hover{
-      color: #a57bd0;
-      text-decoration: underline;
-      transition-timing-function:ease;
-      transition-duration:.4s;
-      cursor: pointer;
-    }
-    
-    #instructor-press{
-      font-size:30px;
-      font-weight:400;
-      color: #0096d9;
-      transition-timing-function:ease;
-      transition-duration:.4s;
-      cursor: pointer;
-      font-family: Inter,Roboto,Helvetica Neue,Arial Nova,Nimbus Sans,Arial,sans-serif;
-    }
-
-    #instructor-press:hover {
-      color: #a57bd0;
-      text-decoration: underline;
-      transition-timing-function:ease;
-      transition-duration:.4s;
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Conversational Assessment</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 40rem;
+        margin: 4rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+        color: #1a1a1a;
       }
+      code { background: #f0f0f0; padding: 0.1em 0.3em; border-radius: 3px; }
+      #status { font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Conversational Assessment</h1>
+    <p>Frontend placeholder — served as static files from <code>/convo/</code>.</p>
+    <p>Backend health check: <span id="status">checking…</span></p>
 
-    #clear-btn {
-      width: auto;
-      font-family: Inter,Roboto,Helvetica Neue,Arial Nova,Nimbus Sans,Arial,sans-serif;
-      padding: 6px 14px;
-      font-size: 13px;
-      background: #b1b1b1;
-      color: #000000;
-      border-radius: 6px;
-      transition-timing-function:ease;
-      transition-duration:.2s;
-      cursor: pointer;
-    }
-    #clear-btn:hover { 
-      background: #000000; 
-      color: #ffff;
-      transition-timing-function:ease;
-      transition-duration:.2s;
-      scale: 105%
-    }
-    
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .message {
-      max-width: 78%;
-      padding: 12px 14px;
-      border-radius: 8px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-      font-size: 15px;
-      
-      /* Add animation properties */
-      animation: slideUpFade 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
-    }
-
-    .assistant {
-      align-self: flex-start;
-      background: #cbcbcb;
-    }
-
-    .user {
-      align-self: flex-end;
-      background: #0096d9;
-      color: #ffffff;
-    }
-
-    /* Keyframes to slide and fade in */
-    @keyframes slideUpFade {
-      from {
-        opacity: 0;
-        transform: translateY(100%) scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-}
-
-    form {
-      display: flex;
-      gap: 10px;
-      padding: 14px;
-      padding-bottom: 20px;
-      background: #ffffff;
-    }
-    textarea {
-      flex: 1;
-      min-height: 48px;
-      max-height: 140px;
-      padding: 12px;
-      border: 2px solid #0096d9;
-      border-radius: 8px;
-      transition-timing-function:ease;
-      transition-duration:.2s;
-      font-family: Inter,Roboto,Helvetica Neue,Arial Nova,Nimbus Sans,Arial,sans-serif;
-      resize: none;
-    }
-    
-    textarea:focus{
-      outline: none;
-      border: 2px solid #a57bd0;
-      transition-timing-function:ease;
-      transition-duration:.2s;
-    }
-
-    button {
-      width: 92px;
-      border: 0;
-      border-radius: 8px;
-      font-family: Inter,Roboto,Helvetica Neue,Arial Nova,Nimbus Sans,Arial,sans-serif;
-      background: #0096d9;
-      color: #ffffff;
-      font-weight: 700;
-      transition-timing-function:ease;
-      transition-duration:.2s;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #a57bd0;
-      color: #ffffff;
-      transition-timing-function:ease;
-      transition-duration:.2s;
-      scale: 105%;
-    }
-
-    button:active {
-      scale: 95%;
-    }
-
-    button:disabled {
-      background: #98a2b3;
-      cursor: wait;
-    }
-  </style>
-</head>
-<body>
-  <main class="app">
-    <header>
-      <div class="header-left">
-        <h1>{KATALLM}</h1>
-      </div>
-      <div class="header-right">
-        <a id="student-press">
-          Student
-        </a>
-        <a id="instructor-press"> 
-          Instructor
-        </a>
-      </div>
-    </header>
-    <section id="chat">
-      <!-- Welcome message -->
-      <div class="message assistant">Everyone thinks of the mean as the central tendency or average, but what explain what it is for the mean to be a model.</div>
-    </section>
-    <form id="form">
-      <textarea id="input" placeholder="Type your answer here..." name="input" ></textarea>
-      <button type="submit" id="submit-btn">Submit</button>
-      <button id="clear-btn">New Chat</button>
-    </form>
-  </main>
-
-  <script>
-    // 1. Get the elements from the screen
-    let currentTurns = 0;
-    let userInstruction = "Silently assess the student's understanding according to the workflow. If the student has shown strong understanding of at least 3 different topics, provide the final assessment summary. Otherwise, respond naturally in 15 to 50 words and ask only one adaptive follow-up question. Do not show internal assessments, round numbers, workflow details, or labels.";
-    const wrap_up = "Begin finishing this conversation";
-    
-    const chatContainer = document.getElementById("chat");
-    const chatForm = document.getElementById("form");
-    const inputField = document.getElementById("input");
-    const submitBtn = document.getElementById("submit-btn");
-    const clearBtn = document.getElementById("clear-btn");
-
-    // 2. Helper function to create a text bubble on the screen
-    function appendMessage(text, sender) {
-      const messageDiv = document.createElement("div");
-      messageDiv.classList.add("message", sender);
-      messageDiv.textContent = text;
-      chatContainer.appendChild(messageDiv);
-      
-      // Auto scroll to the bottom so the user sees the new message
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-  inputField.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault(); // Prevent default newline behavior
-          submitBtn.click(); // Trigger the form's submit event
-      }
-  });
-    // 3. Handle form submission
-    chatForm.addEventListener('submit', function(event) {
-        event.preventDefault(); // Stop page from reloading
-
-        const userInputValue = inputField.value.trim();
-        if (!userInputValue) return; // Do nothing if field is empty
-
-        // Put the user's message on the screen right away
-        appendMessage(userInputValue, "user");
-        
-        // Clear the input box and disable the button while loading
-        inputField.value = "";
-        submitBtn.disabled = true;
-
-        // Build the clean JSON object matching your Flask setup
-        const dataToSend = {
-            input: userInputValue,
-            turns: currentTurns,
-            user_instruction: userInstruction
-
-        };
-
-        // Send the data to your backend
-        fetch('api/string', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json' 
-          },
-          body: JSON.stringify(dataToSend)
+    <script>
+      // Relative path resolves to /convo/api/health behind Apache.
+      fetch('api/health')
+        .then((r) => r.json())
+        .then((d) => {
+          document.getElementById('status').textContent = d.ok
+            ? 'OK ✓ (' + d.service + ')'
+            : 'unexpected response';
         })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error('Server returned an error');
-            }
-            return res.json();
-        })
-        .then(data => {
-            // Read your server properties. Adjust data.server_message if your Flask returns a different key name (like data.response).
-            const aiResponse = data.server_message || data.response || "No response field found in server data.";
-            appendMessage(aiResponse, "assistant");
-        })
-        .catch(err => {
-            console.error("Error:", err);
-            appendMessage("Error: Could not reach the backend AI server.", "assistant");
-        })
-        .finally(() => {
-            // Re-enable the button so the user can type again
-            submitBtn.disabled = false;
-            inputField.focus();
+        .catch(() => {
+          document.getElementById('status').textContent = 'unreachable ✗';
         });
-        currentTurns++;
-    });
-
-
-    // 4. Handle "New Chat" button click
-    clearBtn.addEventListener("click", function() {
-        const confirmNewChat = confirm("Are you sure you want to start a new chat? Your current session will be cleared.");
-    
-    // If the user clicks 'Cancel', stop the action
-      if (!confirmNewChat) {
-        event.preventDefault(); 
-      }
-
-        chatContainer.innerHTML = '<div class="message assistant">Everyone thinks of the mean as the central tendency or average, but what explain what it is for the mean to be a model</div>';
-        currentTurns = 0;
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
+
+
