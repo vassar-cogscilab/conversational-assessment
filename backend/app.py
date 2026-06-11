@@ -22,12 +22,11 @@ import json
 # Load /home/ec2-user/convo-api/.env into the environment at startup. The deploy
 # writes this file from the LLM_API_KEY secret. No-op when the file is absent
 # (e.g. local dev without a .env).
-## load_dotenv()
 
-load_dotenv(dotenv_path='local.env')
+load_dotenv(dotenv_path='/home/ec2-user/convo-api/.env')
 
 # Access your variables
-api_key = os.getenv('ANTHROPIC_API_KEY')
+api_key = os.getenv('LLM_API_KEY')
 
 app = Flask(__name__)
 
