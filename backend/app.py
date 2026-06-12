@@ -290,10 +290,11 @@ def get_string():
     if code == "3030":
         messages.append({
         "role": "user",
-        "content": """An instructor of this student wants to know how much they understand of this concept. Provide the 
+        "content": """An instructor of this student wants to know how much they understand this concept. Provide the 
         final assessment summary only. Briefly summarize demonstrated understanding, remaining gaps, and observed misconceptions. 
         Do not ask another follow-up question, do not give a numerical score, and do not provide instruction or correct answers."""
         })
+        messages.clear()
 
         claude_text = ask_claude()
 
