@@ -56,18 +56,7 @@ with open(pdf_path, "rb") as file_data:
     )
 file_id = uploaded_file.id
 
-messages = [
-    {"role": "user",
-        "content": [
-            {"type": "document", "source": {"type": "file", "file_id": file_id}, 
-            "cache_control": {"type": "ephemeral"}},
-            {"type": "text", 
-
-            ##Remove comments to have AI formulating first question
-            "text": "briefly summarize the content of the document."}##,
-        ## {"type": "text",
-        ##  "text": "Start the assessment conversation. Ask only the opening question."}
-        ]}]
+messages = None
 
 system_prompt = """
 ## Role:
@@ -203,21 +192,6 @@ def ask_user(input):
         "content": user_text + "\n\n" + user_instruction
     })
 
-call_claude()
-
-first_message = "Everyone thinks of the mean as the central tendency or average, but what explain what it is for the mean to be a model."
-
-messages.append({
-        "role": "assistant", 
-        "content": first_message
-})
-
-chat_data.append({
-        "role": "assistant", 
-        "text": first_message
-})
-save_history()
-
 
 @app.get("/")
 @app.get("/health")
@@ -232,13 +206,6 @@ def health():
 @app.get("/chat_history")
 def get_chat():
     return jsonify(chat_data)
-
-turns = 0
-code = 0
-
-if(turns == 0):
-    chat_data.append("\nNEW CONVERSATION")
-    save_history
 
 # API Route that returns the data string
 @app.route('/string', methods=['GET', 'POST'])
@@ -257,14 +224,43 @@ def get_string():
     claude_text = ""
 
     code = 0
+    
+    if(turns == 0):
+        messages = None
+        messages = [
+            {"role": "user",
+                "content": [
+                    {"type": "document", "source": {"type": "file", "file_id": file_id}, 
+                    "cache_control": {"type": "ephemeral"}},
+                    {"type": "text", "text": "briefly summarize the content of the document."}##,
+                ]}]
+        
+        chat_data.append("\nNEW CONVERSATION")
+        save_history
+        
+        call_claude()
 
-    if turns <= 7:
+        messages.append({
+            "role": "user", 
+            "content": "Now move on to the assesment. Start by asking the most important question involving the concept of data models that you want to assess my understanding of."
+        })
+
+        first_message = "Everyone thinks of the mean as the central tendency or average, but what explain what it is for the mean to be a model."
+
+        messages.append({
+            "role": "assistant", 
+            "content": first_message
+        })
+
+        save_history()
+
+    elif turns <= 7:
         print(turns)
         ask_user(user_input)
 
         claude_text = ask_claude()
 
-    if turns > 7 and turns < 10:
+    elif turns > 7 and turns < 10:
         print(turns)
         user_instruction = user_instruction + "/n/n" + wrap_up
 
@@ -272,7 +268,7 @@ def get_string():
 
         claude_text = ask_claude()
 
-    if(turns == 10):
+    elif(turns == 10):
         print(turns)
         user_instruction = "answer my question but then YOU MUST give concluding thoughts and say goodbye"
         
@@ -282,7 +278,7 @@ def get_string():
 
         code = user_input
 
-    if(turns > 10):
+    elif(turns > 10):
         claude_text = "End of conversation, please enter instructor code or start new chat"
 
         code = (user_input)
@@ -295,9 +291,6 @@ def get_string():
         Do not ask another follow-up question, do not give a numerical score, and do not provide instruction or correct answers."""
         })
         claude_text = ask_claude()
-
-        messages.clear()
-
     return jsonify(
         server_message= claude_text)# Send it back to confirm it worked!
 
