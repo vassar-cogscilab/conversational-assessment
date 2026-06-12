@@ -1,39 +1,407 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Conversational Assessment</title>
-    <style>
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        max-width: 40rem;
-        margin: 4rem auto;
-        padding: 0 1rem;
-        line-height: 1.5;
-        color: #1a1a1a;
-      }
-      code { background: #f0f0f0; padding: 0.1em 0.3em; border-radius: 3px; }
-      #status { font-weight: 600; }
-    </style>
-  </head>
-  <body>
-    <h1>Conversational Assessment</h1>
-    <p>Frontend placeholder — served as static files from <code>/convo/</code>.</p>
-    <p>Backend health check: <span id="status">checking…</span></p>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Statistics Learning Assessment</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <script>
-      // Relative path resolves to /convo/api/health behind Apache.
-      fetch('api/health')
-        .then((r) => r.json())
-        .then((d) => {
-          document.getElementById('status').textContent = d.ok
-            ? 'OK ✓ (' + d.service + ')'
-            : 'unexpected response';
-        })
-        .catch(() => {
-          document.getElementById('status').textContent = 'unreachable ✗';
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #56c158 100%);
+      color: #1f2937;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      max-height: 700px;
+    }
+
+    header {
+      padding: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(135deg, #667eea 0%, #56c158 100%);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-content h1 {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .controls button {
+      padding: 8px 16px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .controls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #fafbfc;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message-bubble {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.5;
+      font-size: 14px;
+      word-wrap: break-word;
+    }
+
+    .message.assistant .message-bubble {
+      background: #e0e7ff;
+      border-left: 3px solid #667eea;
+    }
+
+    .message.user .message-bubble {
+      background: #56c158;
+      color: white;
+    }
+
+    .message.system .message-bubble {
+      background: #fef3c7;
+      border-left: 3px solid #f59e0b;
+      font-size: 13px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .input-area {
+      padding: 20px 24px;
+      border-top: 1px solid #e5e7eb;
+      background: white;
+      display: flex;
+      gap: 12px;
+    }
+
+    textarea {
+      flex: 1;
+      min-height: 48px;
+      max-height: 120px;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    .send-btn {
+      padding: 12px 24px;
+      background: #56c158;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .send-btn:hover {
+      background: #5568d3;
+    }
+
+    .send-btn:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      background: #667eea;
+      border-radius: 50%;
+      animation: loading 1.4s infinite;
+      margin: 0 2px;
+    }
+
+    .loading:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .loading:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes loading {
+      0%, 60%, 100% {
+        opacity: 0.3;
+      }
+      30% {
+        opacity: 1;
+      }
+    }
+
+    .status {
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <h1> Statistics Learning Assessment</h1>
+        <div class="subtitle">Chapter 5 Adaptive Assessment Conversation</div>
+      </div>
+      <div class="controls">
+        <button id="clear-btn" disabled>New Chat</button>
+      </div>
+    </header>
+
+    <div class="chat-container" id="chat">
+      <div class="status">Initializing conversation...</div>
+    </div>
+
+    <form class="input-area">
+      <textarea id="answer" placeholder="Type your answer here..." required></textarea>
+      <button type="submit" id="send" class="send-btn" disabled>Send</button>
+    </form>
+  </div>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.querySelector(".input-area");
+    const answer = document.getElementById("answer");
+    const send = document.getElementById("send");
+    const clearBtn = document.getElementById("clear-btn");
+
+    const API_BASE = isDev() ? "http://localhost:3001" : "";
+
+    function isDev() {
+      return window.location.hostname === "localhost" || 
+             window.location.hostname === "127.0.0.1" || 
+             window.location.protocol === "file:";
+    }
+
+    // Submit form on Enter key press without Shift
+    answer.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        if (!send.disabled) {
+          form.requestSubmit();
+        }
+      }
+    });
+
+    function addMessage(role, text) {
+      const message = document.createElement("div");
+      message.className = `message ${role}`;
+
+      const bubble = document.createElement("div");
+      bubble.className = "message-bubble";
+      bubble.textContent = text;
+
+      message.appendChild(bubble);
+      chat.appendChild(message);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function addLoadingMessage() {
+      const message = document.createElement("div");
+      message.className = "message assistant";
+      message.id = "loading-message";
+
+      const bubble = document.createElement("div");
+      bubble.className = "message-bubble";
+      bubble.innerHTML = '<div class="loading"></div><div class="loading"></div><div class="loading"></div>';
+
+      message.appendChild(bubble);
+      chat.appendChild(message);
+      chat.scrollTop = chat.scrollHeight;
+      return message;
+    }
+
+    function updateLoadingMessage(text) {
+      const loadingMsg = document.getElementById("loading-message");
+      if (loadingMsg) {
+        loadingMsg.querySelector(".message-bubble").textContent = text;
+      }
+    }
+
+    async function postJSON(url, data = {}) {
+      try {
+        const response = await fetch(API_BASE + url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
         });
-    </script>
-  </body>
+        return response.json();
+      } catch (err) {
+        console.error("API Error:", err);
+        return { error: err.message };
+      }
+    }
+
+    async function initialize() {
+      chat.innerHTML = "";
+      send.disabled = true;
+      clearBtn.disabled = true;
+
+      try {
+        // Get history first
+        const historyData = await postJSON("/api/history");
+
+        if (historyData.history && historyData.history.length > 0) {
+          // Display history
+          for (const entry of historyData.history) {
+            const text = entry.role === "user"
+              ? entry.text.split("\n\nSilently assess")[0].split("\n\nThis is")[0]
+              : entry.text;
+            addMessage(entry.role, text);
+          }
+          send.disabled = false;
+          clearBtn.disabled = false;
+        } else {
+          // Start new conversation
+          addLoadingMessage();
+          const startData = await postJSON("/api/start");
+
+          if (startData.error) {
+            updateLoadingMessage("Error: Could not start conversation. " + startData.error);
+          } else {
+            updateLoadingMessage(startData.reply);
+            clearBtn.disabled = false;
+          }
+          send.disabled = false;
+        }
+      } catch (err) {
+        chat.innerHTML = "";
+        addMessage("system", "Error: Could not connect to backend. Make sure the server is running.");
+        send.disabled = true;
+      }
+
+      answer.focus();
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = answer.value.trim();
+      if (!text) return;
+
+      addMessage("user", text);
+      answer.value = "";
+      send.disabled = true;
+
+      addLoadingMessage();
+
+      const data = await postJSON("/api/chat", { answer: text });
+
+      if (data.error) {
+        updateLoadingMessage("Error: " + data.error);
+      } else {
+        updateLoadingMessage(data.reply);
+      }
+
+      send.disabled = false;
+      answer.focus();
+    });
+
+    clearBtn.addEventListener("click", async () => {
+      if (!confirm("Start a new conversation? The current record will be cleared.")) return;
+
+      send.disabled = true;
+      clearBtn.disabled = true;
+
+      await postJSON("/api/clear");
+
+      chat.innerHTML = "";
+      addLoadingMessage();
+
+      const startData = await postJSON("/api/start");
+      if (startData.error) {
+        updateLoadingMessage("Error: " + startData.error);
+      } else {
+        updateLoadingMessage(startData.reply);
+      }
+
+      send.disabled = false;
+      clearBtn.disabled = false;
+      answer.focus();
+    });
+
+    // Initialize on page load
+    initialize();
+  </script>
+</body>
 </html>

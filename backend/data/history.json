@@ -1,0 +1,6 @@
+[
+  {
+    "role": "assistant",
+    "text": "# Opening Question\n\nLooking at the California map example where we fit geometric shapes to represent the state's area, what do you think would happen to the overall error if we made our shapes **larger** instead of adjusting their placement more carefully?"
+  }
+]
