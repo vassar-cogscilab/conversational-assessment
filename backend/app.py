@@ -26,7 +26,6 @@ import json
 ##load_dotenv(dotenv_path="local.env")
 
 load_dotenv(dotenv_path="/home/ec2-user/convo-api/.env")
-api_key = os.environ.get("ANTHROPIC_API_KEY")
 
 app = Flask(__name__)
 
