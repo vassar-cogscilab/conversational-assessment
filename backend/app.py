@@ -294,9 +294,9 @@ def get_string():
         final assessment summary only. Briefly summarize demonstrated understanding, remaining gaps, and observed misconceptions. 
         Do not ask another follow-up question, do not give a numerical score, and do not provide instruction or correct answers."""
         })
-        messages.clear()
-
         claude_text = ask_claude()
+
+        messages.clear()
 
     return jsonify(
         server_message= claude_text)# Send it back to confirm it worked!
