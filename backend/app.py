@@ -25,8 +25,7 @@ import json
 
 ##load_dotenv(dotenv_path="local.env")
 
-load_dotenv(dotenv_path="/home/ec2-user/convo-api/.env")
-api_key = os.getenv("LLM_API_KEY")
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -203,7 +202,8 @@ def ask_user(input):
         "role": "user",
         "content": user_text + "\n\n" + user_instruction
     })
-## call_claude()
+
+call_claude()
 
 first_message = "Everyone thinks of the mean as the central tendency or average, but what explain what it is for the mean to be a model."
 
