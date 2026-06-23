@@ -12,7 +12,7 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 import anthropic
 from pathlib import Path
 from dotenv import load_dotenv
@@ -55,8 +55,6 @@ with open(pdf_path, "rb") as file_data:
         file=(os.path.basename(pdf_path), file_data, "application/pdf")
     )
 file_id = uploaded_file.id
-
-messages = None
 
 system_prompt = """
 ## Role:
@@ -151,11 +149,11 @@ Step 7: Final Assessment
 user_instruction = """Silently assess the student's understanding according to the workflow. If the student 
 has shown strong understanding of at least 3 different topics, provide the final assessment summary. Otherwise, respond 
 naturally in 15 to 50 words and ask only one adaptive follow-up question. Do not show internal assessments, round numbers, 
-workflow details, or labels."""
+workflow details, or labels.""" #Major revisions needed
 
 wrap_up = "Begin finishing this conversation"
 
-def call_claude():
+def call_claude(messages):
     response = client.beta.messages.create(
         model="claude-haiku-4-5",
         max_tokens=1024,
@@ -166,19 +164,14 @@ def call_claude():
     return response.content[0].text
 
 
-def ask_claude():
-    claude_text = call_claude()
+#def ask_claude():
+    claude_text = call_claude(all_messages)
 
-    print("\nAssistant Response:")
     print(claude_text)
 
     chat_data.append({"role": "assistant", "text": claude_text})
     save_history()
 
-    messages.append({
-        "role": "assistant",
-        "content": claude_text
-    })
     return claude_text
 
 def ask_user(input):
@@ -192,6 +185,36 @@ def ask_user(input):
         "content": user_text + "\n\n" + user_instruction
     })
 
+messages = [
+    {"role": "user",
+        "content": [
+            {"type": "document", "source": {"type": "file", "file_id": file_id}, 
+            "cache_control": {"type": "ephemeral"}},
+            {"type": "text", "text": "briefly summarize the content of the document."}
+        ]}]
+
+claude_summary = call_claude(messages)
+
+messages.append({
+    "role": "assistant", 
+    "content": claude_summary
+})
+
+messages.append({
+    "role": "user", 
+    "content": "Now move on to the assesment. Start by asking the most important question involving the concept of data models that you want to assess my understanding of."
+})
+
+#first_message = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+
+#messages.append({
+ #   "role": "assistant", 
+  #  "content": first_message
+#})
+
+print(messages)
+
+chat_data.append("\nNEW CONVERSATION")
 
 @app.get("/")
 @app.get("/health")
@@ -210,7 +233,6 @@ def get_chat():
 # API Route that returns the data string
 @app.route('/string', methods=['GET', 'POST'])
 def get_string():
-
     user_instruction = """Silently assess the student's understanding according to the workflow. If the student 
     has shown strong understanding of at least 3 different topics, provide the final assessment summary. Otherwise, respond 
     naturally in 15 to 50 words and ask only one adaptive follow-up question. Do not show internal assessments, round numbers, 
@@ -218,81 +240,40 @@ def get_string():
 
     wrap_up = "Begin finishing this conversation"
 
-    user_data = request.get_json()
+    user_data = request.get_json() or {}
     user_input = user_data.get('input', '')
     turns = user_data.get('turns', 0)
     claude_text = ""
+    user_messages = user_data.get('messages', [])
+    all_messages = messages + user_messages
+    read_messages = user_data.get('read_messages', [])
 
     code = 0
-    
-    if(turns == 0):
-        messages = None
-        messages = [
-            {"role": "user",
-                "content": [
-                    {"type": "document", "source": {"type": "file", "file_id": file_id}, 
-                    "cache_control": {"type": "ephemeral"}},
-                    {"type": "text", "text": "briefly summarize the content of the document."}##,
-                ]}]
-        
-        chat_data.append("\nNEW CONVERSATION")
-        save_history
-        
-        call_claude()
 
-        messages.append({
-            "role": "user", 
-            "content": "Now move on to the assesment. Start by asking the most important question involving the concept of data models that you want to assess my understanding of."
-        })
-
-        first_message = "Everyone thinks of the mean as the central tendency or average, but what explain what it is for the mean to be a model."
-
-        messages.append({
-            "role": "assistant", 
-            "content": first_message
-        })
-
-        save_history()
-
-    elif turns <= 7:
+    if turns <= 9:
         print(turns)
-        ask_user(user_input)
+        print(user_messages)
+        print(read_messages)
+        claude_text = call_claude(all_messages)
 
-        claude_text = ask_claude()
-
-    elif turns > 7 and turns < 10:
+    elif turns > 9:
         print(turns)
-        user_instruction = user_instruction + "/n/n" + wrap_up
-
-        ask_user(user_input)
-
-        claude_text = ask_claude()
-
-    elif(turns == 10):
-        print(turns)
-        user_instruction = "answer my question but then YOU MUST give concluding thoughts and say goodbye"
-        
-        ask_user(user_input)
-
-        claude_text = ask_claude()
+        print(read_messages)
+        claude_text = "End of conversation, please enter instructor code or start new chat"
 
         code = user_input
 
-    elif(turns > 10):
-        claude_text = "End of conversation, please enter instructor code or start new chat"
-
-        code = (user_input)
-
-    if code == "3030":
-        messages.append({
-        "role": "user",
-        "content": """An instructor of this student wants to know how much they understand this concept. Provide the 
-        final assessment summary only. Briefly summarize demonstrated understanding, remaining gaps, and observed misconceptions. 
-        Do not ask another follow-up question, do not give a numerical score, and do not provide instruction or correct answers."""
-        })
-        claude_text = ask_claude()
+        if code == "3030":
+            all_messages.append({
+                "role": "user", 
+                "content": """An instructor of this student wants to know how much they understand this concept. Provide the 
+                    final assessment summary only. Briefly summarize demonstrated understanding, remaining gaps, and observed misconceptions. 
+                    Do not ask another follow-up question, do not give a numerical score, and do not provide instruction or correct answers."""
+            })
+            claude_text = call_claude(all_messages)
+    
     return jsonify(
-        server_message= claude_text)# Send it back to confirm it worked!
+        server_message = claude_text)# Send it back to confirm it worked!
 
 @app.errorhandler(404)
 def not_found(_err):

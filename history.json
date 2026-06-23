@@ -1,0 +1,33 @@
+[
+  "\nNEW CONVERSATION",
+  {
+    "role": "user",
+    "text": "hi"
+  },
+  {
+    "role": "assistant",
+    "text": "What's your understanding of why we use the mean instead of other numbers to model a distribution—what makes it special compared to something like the median?"
+  },
+  {
+    "role": "user",
+    "text": "I don't know"
+  },
+  {
+    "role": "assistant",
+    "text": "Let me ask differently. If you had data with values 5, 5, 5, 10, 20, what property does the mean have that makes it balance the errors above and below it?"
+  },
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION",
+  "\nNEW CONVERSATION"
+]
