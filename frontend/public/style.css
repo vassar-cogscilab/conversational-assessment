@@ -1,0 +1,219 @@
+* { box-sizing: border-box; }
+body {
+    display: block;
+    min-height: 100%;
+    grid-template-rows: auto;
+    grid-template-columns: 1fr;
+    font-family: Arial, Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    overflow: hidden;
+}
+
+.app {
+  width: min(900px, 100%);
+  height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+header {
+  padding: 22px 22px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 3em;
+  line-height: 1.25;
+  color: #0096d9;
+  cursor: default;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+}
+
+.header-right {
+  display: flex;
+  column-gap: 20px;
+  flex-direction: row;
+}
+
+#student-press {
+  font-size: 30px;
+  font-weight: 600;
+  color: #0096d9;
+  transition-timing-function: ease;
+  transition-duration: .4s;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+}
+
+#student-press:hover {
+  color: rgb(165, 123, 208);
+  box-shadow: 0px 3px 0px 0px rgb(165, 123, 208);
+  transition-timing-function: ease;
+  transition-duration: .4s;
+  cursor: pointer;
+}
+
+#instructor-press {
+  font-size: 30px;
+  color: #0096d9;
+  transition-timing-function: ease;
+  transition-duration: .4s;
+  cursor: pointer;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+}
+
+#instructor-press:hover {
+  color: #a57bd0;
+  font-weight: 400;
+  box-shadow: 0px 3px 0px 0px rgb(165, 123, 208);
+  transition-timing-function: ease;
+  transition-duration: .4s;
+}
+
+#clear-btn {
+  width: auto;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+  padding: 6px 14px;
+  font-size: 13px;
+  background: #b1b1b1;
+  color: #000000;
+  border-radius: 6px;
+  transition-timing-function: ease;
+  transition-duration: .2s;
+  cursor: pointer;
+}
+
+#clear-btn:hover {
+  background: #000000;
+  color: #ffff;
+  transition-timing-function: ease;
+  transition-duration: .2s;
+  scale: 105%;
+}
+
+#chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background-color: #f1f1f1;
+  border-radius: 15px;
+}
+
+.message {
+  max-width: 78%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  font-size: 15px;
+  word-wrap: break-word;
+}
+
+@keyframes slideUpFadeUser {
+  0% {
+    opacity: 0;
+    transform: translateY(100%) scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0px 0px 0px 0px rgb(0 74 110 / 1);
+  }
+  100% {
+    box-shadow: 6px 0px 0px 0px rgb(0 74 110 / 1);
+  }
+}
+
+@keyframes slideUpFadeAssistant {
+  0% {
+    opacity: 0;
+    transform: translateY(100%) scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0px 0px 0px 0px rgb(96, 96, 96);
+  }
+  100% {
+    box-shadow: -6px 0px 0px 0px rgb(96, 96, 96);
+  }
+}
+
+.assistant {
+  align-self: flex-start;
+  background: #cbcbcb;
+  animation: slideUpFadeAssistant 0.8s ease-in-out forwards;
+}
+
+.user {
+  align-self: flex-end;
+  background: #0096d9;
+  color: #ffffff;
+  animation: slideUpFadeUser 0.8s ease-in-out forwards;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  padding-bottom: 20px;
+  background: #ffffff;
+}
+
+textarea {
+  flex: 1;
+  min-height: 48px;
+  max-height: 140px;
+  padding: 12px;
+  border: 2px solid #0096d9;
+  border-radius: 8px;
+  transition-timing-function: ease;
+  transition-duration: .2s;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+  resize: none;
+  font-size: 15px;
+}
+
+textarea:focus {
+  outline: none;
+  border: 2px solid #a57bd0;
+  transition-timing-function: ease;
+  transition-duration: .2s;
+}
+
+button {
+  width: 92px;
+  border: 0;
+  border-radius: 8px;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+  background: #0096d9;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #a57bd0;
+  color: #ffffff;
+  transition-timing-function: ease;
+  transition-duration: .2s;
+  scale: 105%;
+}
+
+button:active {
+  scale: 95%;
+}
+
+button:disabled {
+  background: #98a2b3;
+  cursor: wait;
+}
