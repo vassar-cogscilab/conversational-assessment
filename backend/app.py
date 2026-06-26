@@ -8,7 +8,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 import anthropic
-from database_engine import ContextualVectorDB
 
 load_dotenv(dotenv_path="local.env")
 
@@ -21,8 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent
 with open(BASE_DIR / "prompt.txt", encoding="utf-8") as f:
     system_prompt = f.read()
 
-# Load the pre-built contextual vector database
 sys.path.insert(0, str(BASE_DIR / "RAG_5-9"))
+from database_engine import ContextualVectorDB
 
 RAG_DB_PATH = str(BASE_DIR / "RAG_5-9" / "data" / "my_contextual_db" / "contextual_vector_db.pkl")
 rag_db = ContextualVectorDB("my_contextual_db", db_path=RAG_DB_PATH)
