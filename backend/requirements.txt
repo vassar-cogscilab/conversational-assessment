@@ -2,3 +2,8 @@ Flask==3.1.0
 python-dotenv==1.0.1
 gunicorn==23.0.0
 anthropic==0.109.1
+natsort==8.4.0
+langchain-text-splitters==1.1.2
+numpy==2.5.0
+tqdm==4.68.3
+ollama==0.6.2
