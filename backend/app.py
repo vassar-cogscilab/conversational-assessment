@@ -27,18 +27,6 @@ RAG_DB_PATH = str(BASE_DIR / "RAG_5-9" / "data" / "my_contextual_db" / "contextu
 rag_db = ContextualVectorDB("my_contextual_db", db_path=RAG_DB_PATH)
 rag_db.load_db()
 
-CHAT_HISTORY = "history.json"
-try:
-    with open(CHAT_HISTORY, "r", encoding="utf-8") as f:
-        chat_data = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
-    chat_data = []
-
-def save_history():
-    with open(CHAT_HISTORY, "w", encoding="utf-8") as f:
-        json.dump(chat_data, f, ensure_ascii=False, indent=2)
-
-
 INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
 
 USER_INSTRUCTION = (
@@ -53,7 +41,6 @@ WRAP_UP = "Begin finishing this conversation"
 
 # Conversation starter so the model sees the initial question in its history
 BASE_MESSAGES = [
-    {"role": "user", "content": "Begin the assessment."},
     {"role": "assistant", "content": INITIAL_MESSAGE},
 ]
 
@@ -99,12 +86,6 @@ def health():
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
-
-@app.get("/chat_history")
-def get_chat():
-    return jsonify(chat_data)
-
-
 @app.post("/new_chat")
 def new_chat():
     session_id = str(uuid.uuid4())
@@ -138,7 +119,8 @@ def get_string():
             )
             all_messages = session["messages"] + [{"role": "user", "content": instructor_prompt}]
             return jsonify(server_message=call_claude(all_messages))
-        return jsonify(server_message="End of conversation, please enter instructor code or start new chat")
+        else:
+            return jsonify(server_message="End of conversation, please enter instructor code or start new chat")
 
     # Inject assessment instructions server-side so they are never exposed to the client
     instruction = USER_INSTRUCTION
