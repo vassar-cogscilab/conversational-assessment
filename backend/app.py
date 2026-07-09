@@ -17,8 +17,14 @@ client = anthropic.Anthropic()
 
 BASE_DIR = Path(__file__).resolve().parent
 
-with open(BASE_DIR / "prompt.txt", encoding="utf-8") as f:
-    system_prompt = f.read()
+with open(BASE_DIR / "questioner_prompt.txt", encoding="utf-8") as f:
+    questioner_prompt = f.read()
+
+with open(BASE_DIR / "evaluator_prompt.txt", encoding="utf-8") as f:
+    evaluator_prompt = f.read()
+
+with open(BASE_DIR / "summarizer_prompt.txt", encoding="utf-8") as f:
+    summarizer_prompt = f.read()
 
 sys.path.insert(0, str(BASE_DIR / "RAG_5-9"))
 from database_engine import ContextualVectorDB
@@ -27,23 +33,27 @@ RAG_DB_PATH = str(BASE_DIR / "RAG_5-9" / "data" / "my_contextual_db" / "contextu
 rag_db = ContextualVectorDB("my_contextual_db", db_path=RAG_DB_PATH)
 rag_db.load_db()
 
+CHAT_HISTORY = "history.json"
+try:
+    with open(CHAT_HISTORY, "r", encoding="utf-8") as f:
+        chat_data = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    chat_data = []
+
+def save_history():
+    with open(CHAT_HISTORY, "w", encoding="utf-8") as f:
+        json.dump(chat_data, f, ensure_ascii=False, indent=2)
+
 INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
-
-USER_INSTRUCTION = (
-    "Silently assess the student's understanding according to the workflow. "
-    "If the student has shown strong understanding of at least 3 different topics, "
-    "provide the final assessment summary. Otherwise, respond naturally in 15 to 50 words "
-    "and ask only one adaptive follow-up question. Do not show internal assessments, "
-    "round numbers, workflow details, or labels."
-)
-
-WRAP_UP = "Begin finishing this conversation"
 
 # Conversation starter so the model sees the initial question in its history
 BASE_MESSAGES = [
     {"role": "assistant", "content": INITIAL_MESSAGE},
 ]
 
+chat_data.append({
+    "first_message": INITIAL_MESSAGE,
+})
 # In-memory session store: session_id -> {messages, turns}
 # Requires a single gunicorn worker — sessions are lost on restart.
 sessions = {}
@@ -62,19 +72,18 @@ def get_rag_context(query: str, k: int = 4) -> str:
     return "\n".join(blocks)
 
 
-def call_claude(messages, rag_query=None):
-    dynamic_system = system_prompt
+def call_claude(messages, prompt, rag_query=None):
     if rag_query:
         context = get_rag_context(rag_query)
-        dynamic_system += f"\n\n<verified_context>\n{context}\n</verified_context>"
+        prompt += f"\n\n<verified_context>\n{context}\n</verified_context>"
 
     response = client.messages.create(
-        model="claude-haiku-4-5",
+        model="claude-sonnet-5",
         max_tokens=1024,
-        system=dynamic_system,
+        system=prompt,
         messages=messages,
     )
-    return response.content[0].text
+    return next(block.text for block in response.content if block.type == "text")
 
 
 @app.get("/")
@@ -86,12 +95,21 @@ def health():
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
+@app.get("/summary")
+def get_summary():
+    session_id = request.args.get("session_id", "")
+    if session_id not in sessions:
+        return jsonify(error="session_not_found"), 404
+    summary = sessions[session_id].get("evaluation_summary", "No summary yet.")
+    return jsonify(evaluation_summary=summary)
+
 @app.post("/new_chat")
 def new_chat():
     session_id = str(uuid.uuid4())
     sessions[session_id] = {
         "messages": list(BASE_MESSAGES),
         "turns": 0,
+        "current_question": INITIAL_MESSAGE,
     }
     return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
 
@@ -106,38 +124,42 @@ def get_string():
         return jsonify(error="session_not_found"), 404
 
     session = sessions[session_id]
-    turns = session["turns"]
+    current_question = session["current_question"]
 
-    # Conversation over — only accept the instructor code
-    if turns > 9:
-        if user_input == "3030":
-            instructor_prompt = (
-                "An instructor of this student wants to know how much they understand this concept. "
-                "Provide the final assessment summary only. Briefly summarize demonstrated understanding, "
-                "remaining gaps, and observed misconceptions. Do not ask another follow-up question, "
-                "do not give a numerical score, and do not provide instruction or correct answers."
-            )
-            all_messages = session["messages"] + [{"role": "user", "content": instructor_prompt}]
-            return jsonify(server_message=call_claude(all_messages))
-        else:
-            return jsonify(server_message="End of conversation, please enter instructor code or start new chat")
+    eval_messages = [
+        {"role": "assistant", "content": "## Question: " + current_question},
+        {"role": "user", "content": "## Answer: " + user_input},
+    ]
+    claude_evaluation = call_claude(eval_messages, evaluator_prompt, rag_query=user_input)
+    print(f"Claude evaluation: {claude_evaluation}")
 
-    # Inject assessment instructions server-side so they are never exposed to the client
-    instruction = USER_INSTRUCTION
-    if turns > 7:
-        instruction += "\n" + WRAP_UP
-    if turns == 9:
-        instruction = "respond to the user but then YOU MUST say goodbye"
+    session["messages"].append({
+        "role": "user",
+        "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + claude_evaluation,
+    })
 
-    session["messages"].append({"role": "user", "content": user_input + "\n" + instruction})
+    next_question = call_claude(session["messages"], questioner_prompt, rag_query=user_input)
 
-    claude_text = call_claude(session["messages"], rag_query=user_input)
-
-    session["messages"].append({"role": "assistant", "content": claude_text})
+    session["messages"].append({"role": "assistant", "content": "## Question\n" + next_question})
+    session["current_question"] = next_question
     session["turns"] += 1
+    print(session["turns"])
 
-    return jsonify(server_message=claude_text)
+    chat_data.append({
+        "user_input": user_input,
+        "claude_evaluation": claude_evaluation,
+        "current_question": next_question,
+    })
+    save_history()
 
+    claude_summary = None
+
+    if session["turns"] == 15:
+        # After 15 turns, generate a summary of the conversation
+        claude_summary = call_claude(session["messages"], summarizer_prompt, rag_query=user_input)
+        session["evaluation_summary"] = claude_summary
+
+    return jsonify(server_message=next_question, evaluation_summary=claude_summary)
 
 @app.errorhandler(404)
 def not_found(_err):

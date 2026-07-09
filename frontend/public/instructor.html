@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CourseKata AI — Instructor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="header-left">
+        <h1>{KATALLM}</h1>
+      </div>
+      <div class="header-right">
+        <a id="student-press" href="index.html">Student</a>
+        <a id="instructor-press">Instructor</a>
+      </div>
+    </header>
+    <div id="summary-box" class="placeholder">No evaluation summary yet. Submit a response on the student page first.</div>
+  </main>
+  <script>
+    const summaryBox = document.getElementById("summary-box");
+    const sessionId = localStorage.getItem("session_id");
+
+    async function loadSummary() {
+      if (!sessionId) return;
+      try {
+        const res = await fetch(`http://127.0.0.1:3001/summary?session_id=${sessionId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.evaluation_summary) {
+          summaryBox.textContent = data.evaluation_summary;
+          summaryBox.classList.remove("placeholder");
+        }
+      } catch (err) {
+        summaryBox.textContent = "Could not load summary — backend unavailable.";
+      }
+    }
+
+    loadSummary();
+  </script>
+</body>
+</html>
