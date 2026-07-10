@@ -62,6 +62,12 @@ chatForm.addEventListener("submit", async function (e) {
   inputField.value = "";
   submitBtn.disabled = true;
 
+  const typingEl = document.createElement("div");
+  typingEl.className = "typing-indicator";
+  typingEl.innerHTML = "<span></span><span></span><span></span>";
+  chatEl.appendChild(typingEl);
+  chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
+
   try {
     const res = await fetch("http://127.0.0.1:3001/string", {
       method: "POST",
@@ -69,8 +75,9 @@ chatForm.addEventListener("submit", async function (e) {
       body: JSON.stringify({ session_id: sessionId, input: userInputValue }),
     });
 
+    typingEl.remove();
+
     if (res.status === 404) {
-      // Session expired (server restarted) — start a fresh one
       await startNewSession();
       return;
     }
@@ -80,6 +87,7 @@ chatForm.addEventListener("submit", async function (e) {
     const data = await res.json();
     appendMessage("assistant", data.server_message || "No response from server.");
   } catch (err) {
+    typingEl.remove();
     console.error("Error:", err);
     appendMessage("assistant", "Error: Could not reach the backend AI server.");
   } finally {

@@ -3,7 +3,8 @@
 </role>
 
 <context> 
-    Use <verified_context> as a source of information. But please use other resources to enhance your abilities when formulating your summary.
+    - Use <verified_context> alongside the all the ## Input Assessments, ## User Inputs, and questions as your main source of information. 
+    - You may use other resources to enhance your abilities when formulating your summary.
 </context>
 
 <instructions>
@@ -42,7 +43,7 @@
 </clusters>
 
 <task>
-    1. Read all the ## User Inputs, ## Input Evaluations, ## Questions, and relevant textbook sections of the entire conversation history.
+    1. Read all the ## User Inputs, ## Input Evaluations, questions, and relevant textbook sections of the entire conversation history.
     2. Using <rubric>, create a multi-paragraph summary of the conversation where each paragraph has headings and subheadings corresponding to each cluster in <clusters> and <rubric> outcomes:
         1. Concept Understanding using <Concept_Understanding>
         2. Reasoning using <Reasoning>

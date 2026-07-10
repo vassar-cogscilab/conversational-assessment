@@ -72,16 +72,20 @@ def get_rag_context(query: str, k: int = 4) -> str:
     return "\n".join(blocks)
 
 
-def call_claude(messages, prompt, rag_query=None):
-    if rag_query:
-        context = get_rag_context(rag_query)
-        prompt += f"\n\n<verified_context>\n{context}\n</verified_context>"
+def call_claude(messages, prompt, rag_context=None):
+    msgs = list(messages)
+    if rag_context:
+        tag = f"\n\n<verified_context>\n{rag_context}\n</verified_context>"
+        if msgs and msgs[-1]["role"] == "user":
+            msgs[-1] = {**msgs[-1], "content": msgs[-1]["content"] + tag}
+        else:
+            msgs.append({"role": "user", "content": tag})
 
     response = client.messages.create(
         model="claude-sonnet-5",
         max_tokens=1024,
-        system=prompt,
-        messages=messages,
+        system=[{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}],
+        messages=msgs,
     )
     return next(block.text for block in response.content if block.type == "text")
 
@@ -110,6 +114,7 @@ def new_chat():
         "messages": list(BASE_MESSAGES),
         "turns": 0,
         "current_question": INITIAL_MESSAGE,
+        "rag_contexts": [],
     }
     return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
 
@@ -126,11 +131,14 @@ def get_string():
     session = sessions[session_id]
     current_question = session["current_question"]
 
+    rag_context = get_rag_context(user_input)
+    session["rag_contexts"].append(rag_context)
+
     eval_messages = [
         {"role": "assistant", "content": "## Question: " + current_question},
         {"role": "user", "content": "## Answer: " + user_input},
     ]
-    claude_evaluation = call_claude(eval_messages, evaluator_prompt, rag_query=user_input)
+    claude_evaluation = call_claude(eval_messages, evaluator_prompt, rag_context=rag_context)
     print(f"Claude evaluation: {claude_evaluation}")
 
     session["messages"].append({
@@ -138,9 +146,9 @@ def get_string():
         "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + claude_evaluation,
     })
 
-    next_question = call_claude(session["messages"], questioner_prompt, rag_query=user_input)
+    next_question = call_claude(session["messages"], questioner_prompt, rag_context=rag_context)
 
-    session["messages"].append({"role": "assistant", "content": "## Question\n" + next_question})
+    session["messages"].append({"role": "assistant", "content": next_question})
     session["current_question"] = next_question
     session["turns"] += 1
     print(session["turns"])
@@ -154,9 +162,9 @@ def get_string():
 
     claude_summary = None
 
-    if session["turns"] == 15:
-        # After 15 turns, generate a summary of the conversation
-        claude_summary = call_claude(session["messages"], summarizer_prompt, rag_query=user_input)
+    if session["turns"] == 10:
+        all_rag = "\n\n".join(session["rag_contexts"])
+        claude_summary = call_claude(session["messages"], summarizer_prompt, rag_context=all_rag)
         session["evaluation_summary"] = claude_summary
 
     return jsonify(server_message=next_question, evaluation_summary=claude_summary)
