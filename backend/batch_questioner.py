@@ -1,115 +1,99 @@
-"""
-Batch-tests the questioner against a CSV of student responses.
-
-Usage:
-    python batch_questioner.py --input responses.csv --output results.csv
-
-Expected CSV columns: item_id, chapter, response, prompt, dt_submitted
-Output adds a `follow_up_question` column.
-"""
-
-import argparse
-import csv
-import html
-import re
-import time
+import anthropic, csv, html, re, sys, time
 from pathlib import Path
-
 from dotenv import load_dotenv
-import anthropic
 
 load_dotenv(dotenv_path=Path(__file__).parent / "local.env")
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).parent
+
 with open(BASE_DIR / "questioner_prompt.txt", encoding="utf-8") as f:
-    QUESTIONER_PROMPT = f.read()
+    questioner_prompt = f.read()
+with open(BASE_DIR / "evaluator_prompt.txt", encoding="utf-8") as f:
+    evaluator_prompt = f.read()
+
+sys.path.insert(0, str(BASE_DIR / "RAG_5-9"))
+from database_engine import ContextualVectorDB
+rag_db = ContextualVectorDB("my_contextual_db", db_path=str(BASE_DIR / "RAG_5-9/data/my_contextual_db/contextual_vector_db.pkl"))
+rag_db.load_db()
 
 client = anthropic.Anthropic()
 
+def get_rag_context(query, k=4):
+    results = rag_db.search(query, k=k)
+    return "\n".join(
+        f"--- Context Segment ---\nContext: {m['metadata']['contextualized_content']}\nContent:\n{m['metadata']['original_content']}\n"
+        for m in results
+    )
 
-def clean_prompt(text: str) -> str:
-    """Strip HTML entities and inline LaTeX wrappers for cleaner display."""
-    text = html.unescape(text)
-    text = re.sub(r"&[a-z]+;", " ", text)
-    return text.strip()
+def clean(text):
+    return re.sub(r"&[a-z]+;", " ", html.unescape(text)).strip()
 
+# Load rows and pre-fetch RAG
+rows = list(csv.DictReader(open("student_data.csv")))
+rag_contexts = [get_rag_context(row["response"]) for row in rows]
+print(f"RAG done for {len(rows)} rows")
 
-def build_requests(rows: list[dict]) -> list[dict]:
-    requests = []
-    for i, row in enumerate(rows):
-        question = clean_prompt(row["prompt"])
-        response = row["response"].strip()
-        requests.append({
-            "custom_id": str(i),
-            "params": {
-                "model": "claude-sonnet-5",
-                "max_tokens": 512,
-                "system": [
-                    {
-                        "type": "text",
-                        "text": QUESTIONER_PROMPT,
-                        "cache_control": {"type": "ephemeral"},
-                    }
-                ],
-                "messages": [
-                    {"role": "assistant", "content": question},
-                    {"role": "user", "content": response},
-                ],
-            },
-        })
-    return requests
+def system(prompt):
+    return [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}]
 
-
-def poll_until_done(batch_id: str, interval: int = 30) -> None:
+def poll(batch_id, label):
     while True:
-        batch = client.messages.batches.retrieve(batch_id)
-        counts = batch.request_counts
-        print(
-            f"  processing={counts.processing}  "
-            f"succeeded={counts.succeeded}  "
-            f"errored={counts.errored}"
-        )
-        if batch.processing_status == "ended":
+        b = client.messages.batches.retrieve(batch_id)
+        print(f"[{label}] processing={b.request_counts.processing} succeeded={b.request_counts.succeeded}")
+        if b.processing_status == "ended":
             return
-        time.sleep(interval)
+        time.sleep(60)
 
+def collect(batch_id):
+    return {r.custom_id: r.result.message.content[0].text for r in client.messages.batches.results(batch_id) if r.result.type == "succeeded"}
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, help="Path to input CSV")
-    parser.add_argument("--output", required=True, help="Path to output CSV")
-    args = parser.parse_args()
+# Batch 1: evaluator
+eval_batch = client.messages.batches.create(requests=[
+    {
+        "custom_id": f"row-{i}",
+        "params": {
+            "model": "claude-sonnet-5",
+            "max_tokens": 1024,
+            "system": system(evaluator_prompt),
+            "messages": [
+                {"role": "assistant", "content": "## Question: " + clean(row["prompt"])},
+                {"role": "user", "content": "## Answer: " + row["response"] + f"\n\n<verified_context>\n{rag_contexts[i]}\n</verified_context>"},
+            ],
+        }
+    }
+    for i, row in enumerate(rows)
+])
+print(f"Evaluator batch: {eval_batch.id}")
+poll(eval_batch.id, "evaluator")
+evaluations = collect(eval_batch.id)
 
-    with open(args.input, newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
+# Batch 2: questioner
+q_batch = client.messages.batches.create(requests=[
+    {
+        "custom_id": f"row-{i}",
+        "params": {
+            "model": "claude-sonnet-5",
+            "max_tokens": 512,
+            "system": system(questioner_prompt),
+            "messages": [
+                {"role": "assistant", "content": clean(row["prompt"])},
+                {"role": "user", "content": "## User Input\n" + row["response"] + "\n## Input Assessment\n" + evaluations.get(f"row-{i}", "") + f"\n\n<verified_context>\n{rag_contexts[i]}\n</verified_context>"},
+            ],
+        }
+    }
+    for i, row in enumerate(rows)
+])
+print(f"Questioner batch: {q_batch.id}")
+poll(q_batch.id, "questioner")
+follow_ups = collect(q_batch.id)
 
-    print(f"Loaded {len(rows)} rows. Submitting batch…")
-    requests = build_requests(rows)
-    batch = client.messages.batches.create(requests=requests)
-    print(f"Batch ID: {batch.id}")
+# Write output
+with open("student_data.csv", "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()) + ["evaluation", "follow_up_question"])
+    writer.writeheader()
+    for i, row in enumerate(rows):
+        row["evaluation"] = evaluations.get(f"row-{i}", "")
+        row["follow_up_question"] = follow_ups.get(f"row-{i}", "")
+        writer.writerow(row)
 
-    print("Polling for completion…")
-    poll_until_done(batch.id)
-
-    # Index results by custom_id
-    results_map: dict[str, str] = {}
-    for result in client.messages.batches.results(batch.id):
-        if result.result.type == "succeeded":
-            text = result.result.message.content[0].text
-        else:
-            text = f"ERROR: {result.result.type}"
-        results_map[result.custom_id] = text
-
-    fieldnames = list(rows[0].keys()) + ["follow_up_question"]
-    with open(args.output, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for i, row in enumerate(rows):
-            row["follow_up_question"] = results_map.get(str(i), "")
-            writer.writerow(row)
-
-    print(f"Done. Results written to {args.output}")
-
-
-if __name__ == "__main__":
-    main()
+print("Done. Results written to student_data.csv")
