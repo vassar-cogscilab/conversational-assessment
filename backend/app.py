@@ -20,12 +20,6 @@ BASE_DIR = Path(__file__).resolve().parent
 with open(BASE_DIR / "questioner_prompt.txt", encoding="utf-8") as f:
     questioner_prompt = f.read()
 
-with open(BASE_DIR / "evaluator_prompt.txt", encoding="utf-8") as f:
-    evaluator_prompt = f.read()
-
-with open(BASE_DIR / "summarizer_prompt.txt", encoding="utf-8") as f:
-    summarizer_prompt = f.read()
-
 sys.path.insert(0, str(BASE_DIR / "RAG_5-9"))
 from database_engine import ContextualVectorDB
 
@@ -113,7 +107,6 @@ def new_chat():
     sessions[session_id] = {
         "messages": list(BASE_MESSAGES),
         "turns": 0,
-        "current_question": INITIAL_MESSAGE,
         "rag_contexts": [],
     }
     return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
@@ -129,45 +122,25 @@ def get_string():
         return jsonify(error="session_not_found"), 404
 
     session = sessions[session_id]
-    current_question = session["current_question"]
 
     rag_context = get_rag_context(user_input)
     session["rag_contexts"].append(rag_context)
 
-    eval_messages = [
-        {"role": "assistant", "content": "## Question: " + current_question},
-        {"role": "user", "content": "## Answer: " + user_input},
-    ]
-    claude_evaluation = call_claude(eval_messages, evaluator_prompt, rag_context=rag_context)
-    print(f"Claude evaluation: {claude_evaluation}")
-
-    session["messages"].append({
-        "role": "user",
-        "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + claude_evaluation,
-    })
+    session["messages"].append({"role": "user", "content": user_input})
 
     next_question = call_claude(session["messages"], questioner_prompt, rag_context=rag_context)
 
     session["messages"].append({"role": "assistant", "content": next_question})
-    session["current_question"] = next_question
     session["turns"] += 1
     print(session["turns"])
 
     chat_data.append({
         "user_input": user_input,
-        "claude_evaluation": claude_evaluation,
         "current_question": next_question,
     })
     save_history()
 
-    claude_summary = None
-
-    if session["turns"] == 10:
-        all_rag = "\n\n".join(session["rag_contexts"])
-        claude_summary = call_claude(session["messages"], summarizer_prompt, rag_context=all_rag)
-        session["evaluation_summary"] = claude_summary
-
-    return jsonify(server_message=next_question, evaluation_summary=claude_summary)
+    return jsonify(server_message=next_question)
 
 @app.errorhandler(404)
 def not_found(_err):
