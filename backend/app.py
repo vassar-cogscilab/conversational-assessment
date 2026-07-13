@@ -44,7 +44,7 @@ def save_history():
     with open(CHAT_HISTORY, "w", encoding="utf-8") as f:
         json.dump(chat_data, f, ensure_ascii=False, indent=2)
 
-INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+INITIAL_MESSAGE = "Compare the two z scores (2 vs. 0.4). Which is more impressive, a player with a z score of 2 or one with a z score of 0.4? Why?"
 
 # Conversation starter so the model sees the initial question in its history
 BASE_MESSAGES = [
@@ -116,6 +116,10 @@ def new_chat():
         "current_question": INITIAL_MESSAGE,
         "rag_contexts": [],
     }
+    chat_data.append({
+        "current_question": INITIAL_MESSAGE,
+    })
+    save_history()
     return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
 
 
