@@ -2,7 +2,7 @@ import anthropic, csv, html, re, sys, time
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=Path(__file__).parent / "local.env")
+load_dotenv(dotenv_path="local.env")
 
 BASE_DIR = Path(__file__).parent
 
@@ -50,7 +50,7 @@ def collect(batch_id):
         if r.result.type != "succeeded":
             failed.append((r.custom_id, r.result.type, getattr(r.result, "error", None)))
             continue
-        texts[r.custom_id] = r.result.message.content[0].text
+        texts[r.custom_id] = next((b.text for b in r.result.message.content if b.type == "text"), "")
         usage = r.result.message.usage
         cache_read += usage.cache_read_input_tokens or 0
         cache_write += usage.cache_creation_input_tokens or 0
@@ -69,6 +69,7 @@ q_batch = client.messages.batches.create(requests=[
         "params": {
             "model": "claude-sonnet-5",
             "max_tokens": 1024,
+            "thinking": {"type": "disabled"},
             "system": system(questioner_prompt),
             "messages": [
                 {"role": "assistant", "content": clean(row["prompt"])},
