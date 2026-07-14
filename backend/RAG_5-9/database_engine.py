@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import anthropic
-from ollama import Client # pip install ollama
+import voyageai # pip install voyageai
 from dotenv import load_dotenv
 
 # Assuming MODEL_NAME for Anthropic is defined globally elsewhere in your script
@@ -20,9 +20,9 @@ class ContextualVectorDB:
         if anthropic_api_key is None:
             anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
 
-        # Local Ollama client (defaults to http://localhost:11434)
-        self.ollama_client = Client()
-        self.embed_model = "nomic-embed-text"
+        # Voyage AI embeddings (cloud API, no local model/tunnel needed)
+        self.voyage_client = voyageai.Client(api_key=os.getenv("VOYAGE_API_KEY"))
+        self.embed_model = "voyage-4-large"
 
         self.anthropic_client = anthropic.Anthropic(api_key=anthropic_api_key)
         self.name = name
@@ -151,19 +151,42 @@ class ContextualVectorDB:
             return v
         return v / norm
 
+    def _embed_texts(self, texts: list[str], input_type: str) -> list[list[float]]:
+        # Voyage caps batches at 1000 texts AND 120,000 tokens per call.
+        # There's no local tokenizer here, so estimate tokens as chars/4 and
+        # keep batches well under the cap to absorb estimation error.
+        MAX_ITEMS = 1000
+        MAX_CHARS = 350_000  # ~87.5k estimated tokens, safety margin under 120k
+
+        embeddings = []
+        batch: list[str] = []
+        batch_chars = 0
+
+        def flush():
+            nonlocal batch, batch_chars
+            if not batch:
+                return
+            result = self.voyage_client.embed(batch, model=self.embed_model, input_type=input_type)
+            embeddings.extend(result.embeddings)
+            batch, batch_chars = [], 0
+
+        for text in texts:
+            if batch and (len(batch) >= MAX_ITEMS or batch_chars + len(text) > MAX_CHARS):
+                flush()
+            batch.append(text)
+            batch_chars += len(text)
+        flush()
+
+        return [self._normalize(e) for e in embeddings]
+
     def _get_single_embedding(self, text: str) -> list[float]:
-        # Local Ollama embedding generation
-        response = self.ollama_client.embeddings(
-            model=self.embed_model,
-            prompt=text
-        )
-        return self._normalize(response['embedding'])
+        # Queries are embedded with input_type="query"; corpus chunks use
+        # "document" via _embed_and_store — Voyage recommends distinguishing
+        # the two for retrieval quality.
+        return self._embed_texts([text], input_type="query")[0]
 
     def _embed_and_store(self, texts: list[str], data: list[dict[str, Any]]):
-        self.embeddings = []
-        for text in tqdm(texts, desc="Generating local Nomic embeddings"):
-            emb = self._get_single_embedding(text)
-            self.embeddings.append(emb)
+        self.embeddings = self._embed_texts(texts, input_type="document")
         self.metadata = data
  
     def search(self, query: str, k: int = 20) -> list[dict[str, Any]]:

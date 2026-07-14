@@ -64,14 +64,21 @@ jobs:
           # the Anthropic SDK reads by default). Add more vars to the heredoc
           # below as the backend grows.
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          # RAG embeddings (RAG_5-9/database_engine.py) via Voyage AI.
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
         run: |
           if [ -z "$LLM_API_KEY" ]; then
             echo "::warning::LLM_API_KEY secret is empty; leaving existing .env untouched"
             exit 0
           fi
-          # Pipe over stdin (key never appears in argv) and create with umask 077 (file mode 600).
-          printf 'ANTHROPIC_API_KEY=%s\n' "$LLM_API_KEY" \
-            | ssh -i ~/.ssh/deploy_key \
+          if [ -z "$VOYAGE_API_KEY" ]; then
+            echo "::warning::VOYAGE_API_KEY secret is empty; RAG embeddings will fail until it's set"
+          fi
+          # Pipe over stdin (keys never appear in argv) and create with umask 077 (file mode 600).
+          {
+            printf 'ANTHROPIC_API_KEY=%s\n' "$LLM_API_KEY"
+            [ -n "$VOYAGE_API_KEY" ] && printf 'VOYAGE_API_KEY=%s\n' "$VOYAGE_API_KEY"
+          } | ssh -i ~/.ssh/deploy_key \
                 "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
                 "umask 077 && cat > '${REMOTE_BACKEND}/.env'"
 

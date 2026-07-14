@@ -59,6 +59,7 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 | `EC2_USER` | `ec2-user` |
 | `EC2_SSH_KEY` | A private SSH key whose public half is in `~ec2-user/.ssh/authorized_keys` |
 | `LLM_API_KEY` | Anthropic API key. The deploy writes it to `~/convo-api/.env` as `ANTHROPIC_API_KEY` (mode 600). |
+| `VOYAGE_API_KEY` | Voyage AI key for RAG embeddings (`backend/RAG_5-9/database_engine.py`). Written to the same `.env` as `VOYAGE_API_KEY`. Get one at dash.voyageai.com — free for this project's volume. |
 
 **Recommended:** generate a dedicated deploy key rather than reusing the instance
 `.pem`, so it can be rotated/revoked independently:

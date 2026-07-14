@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 import anthropic
 
-load_dotenv(dotenv_path="local.env")
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
@@ -33,34 +33,42 @@ RAG_DB_PATH = str(BASE_DIR / "RAG_5-9" / "data" / "my_contextual_db" / "contextu
 rag_db = ContextualVectorDB("my_contextual_db", db_path=RAG_DB_PATH)
 rag_db.load_db()
 
-CHAT_HISTORY = "history.json"
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
+
+# Session store: session_id -> {messages, turns, current_question, rag_contexts, evaluation_summary}.
+# Persisted to SESSIONS_FILE after every mutation and reloaded at startup, so a
+# restart doesn't lose history — this also doubles as the data source for the
+# /admin/sessions endpoints below. Requires a single gunicorn worker: each
+# worker would otherwise keep its own in-memory copy and clobber the others'
+# writes to disk.
+SESSIONS_FILE = BASE_DIR / "sessions.json"
 try:
-    with open(CHAT_HISTORY, "r", encoding="utf-8") as f:
-        chat_data = json.load(f)
+    with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
+        sessions = json.load(f)
 except (FileNotFoundError, json.JSONDecodeError):
-    chat_data = []
+    sessions = {}
 
-def save_history():
-    with open(CHAT_HISTORY, "w", encoding="utf-8") as f:
-        json.dump(chat_data, f, ensure_ascii=False, indent=2)
+def save_sessions():
+    with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(sessions, f, ensure_ascii=False, indent=2)
 
-INITIAL_MESSAGE = "Compare the two z scores (2 vs. 0.4). Which is more impressive, a player with a z score of 2 or one with a z score of 0.4? Why?"
+INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
 
 # Conversation starter so the model sees the initial question in its history
 BASE_MESSAGES = [
     {"role": "assistant", "content": INITIAL_MESSAGE},
 ]
 
-chat_data.append({
-    "first_message": INITIAL_MESSAGE,
-})
-# In-memory session store: session_id -> {messages, turns}
-# Requires a single gunicorn worker — sessions are lost on restart.
-sessions = {}
-
 
 def get_rag_context(query: str, k: int = 4) -> str:
-    results = rag_db.search(query, k=k)
+    # RAG embeddings run through Ollama over an SSH tunnel to a remote
+    # research machine — treat that link as unreliable and degrade to no
+    # context rather than 500ing the student's turn if it's down.
+    try:
+        results = rag_db.search(query, k=k)
+    except Exception as exc:
+        print(f"RAG lookup failed, continuing without context: {exc}")
+        return ""
     blocks = []
     for match in results:
         meta = match["metadata"]
@@ -116,10 +124,7 @@ def new_chat():
         "current_question": INITIAL_MESSAGE,
         "rag_contexts": [],
     }
-    chat_data.append({
-        "current_question": INITIAL_MESSAGE,
-    })
-    save_history()
+    save_sessions()
     return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
 
 
@@ -157,13 +162,6 @@ def get_string():
     session["turns"] += 1
     print(session["turns"])
 
-    chat_data.append({
-        "user_input": user_input,
-        "claude_evaluation": claude_evaluation,
-        "current_question": next_question,
-    })
-    save_history()
-
     claude_summary = None
 
     if session["turns"] == 10:
@@ -171,7 +169,45 @@ def get_string():
         claude_summary = call_claude(session["messages"], summarizer_prompt, rag_context=all_rag)
         session["evaluation_summary"] = claude_summary
 
+    save_sessions()
+
     return jsonify(server_message=next_question, evaluation_summary=claude_summary)
+
+
+def require_admin():
+    if not ADMIN_TOKEN:
+        return jsonify(error="admin_not_configured"), 500
+    token = request.headers.get("X-Admin-Token") or request.args.get("token")
+    if token != ADMIN_TOKEN:
+        return jsonify(error="unauthorized"), 401
+    return None
+
+
+@app.get("/admin/sessions")
+def admin_list_sessions():
+    err = require_admin()
+    if err:
+        return err
+    return jsonify(sessions=[
+        {
+            "session_id": session_id,
+            "turns": s.get("turns", 0),
+            "current_question": s.get("current_question"),
+            "has_summary": "evaluation_summary" in s,
+        }
+        for session_id, s in sessions.items()
+    ])
+
+
+@app.get("/admin/sessions/<session_id>")
+def admin_get_session(session_id):
+    err = require_admin()
+    if err:
+        return err
+    if session_id not in sessions:
+        return jsonify(error="session_not_found"), 404
+    return jsonify(session_id=session_id, **sessions[session_id])
+
 
 @app.errorhandler(404)
 def not_found(_err):

@@ -6,4 +6,4 @@ natsort==8.4.0
 langchain-text-splitters==1.1.2
 numpy==2.5.0
 tqdm==4.68.3
-ollama==0.6.2
+voyageai==0.5.0
