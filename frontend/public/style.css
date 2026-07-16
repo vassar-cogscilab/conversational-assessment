@@ -8,12 +8,12 @@ body {
     font-size: 16px;
     line-height: 1.2;
     overflow: hidden;
-    background: #1b0059
+    background: var(--background-color);
 }
 
 :root {
   --primary-color: #08cadc;
-  --primary-dark: #01b6c3;
+  --primary-dark: #004f55;
   --secondary-color: #ff597e;
   --secondary-dark: #c60011;
   --background-color: #1b0059;
@@ -29,12 +29,12 @@ body {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  background: #1b0059;
+  background: var(--background-color);
 }
 
 header {
   padding: 22px 22px;
-  background: #1b0059;
+  background: var(--background-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -44,7 +44,7 @@ header {
   margin: 0;
   font-size: 3em;
   line-height: 1.25;
-  color: #08cadc;
+  color: var(--primary-color);
   cursor: default;
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
 }
@@ -58,7 +58,7 @@ header {
 #student-press {
   font-size: 30px;
   font-weight: 600;
-  color: #08cadc;
+  color: var(--primary-color);
   transition-timing-function: ease;
   transition-duration: .4s;
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
@@ -66,8 +66,8 @@ header {
 }
 
 #student-press:hover {
-  color: #ff597e;
-  box-shadow: 0px 3px 0px 0px #ff597e;
+  color: var(--secondary-color);
+  box-shadow: 0px 3px 0px 0px var(--secondary-color);
   transition-timing-function: ease;
   transition-duration: .4s;
   cursor: pointer;
@@ -75,7 +75,7 @@ header {
 
 #instructor-press {
   font-size: 30px;
-  color: #08cadc;
+  color: var(--primary-color);
   transition-timing-function: ease;
   transition-duration: .4s;
   cursor: pointer;
@@ -84,9 +84,9 @@ header {
 }
 
 #instructor-press:hover {
-  color: #ff597e;
+  color: var(--secondary-color);
   font-weight: 400;
-  box-shadow: 0px 3px 0px 0px #ff597e;
+  box-shadow: 0px 3px 0px 0px var(--secondary-color);
   transition-timing-function: ease;
   transition-duration: .4s;
 }
@@ -119,7 +119,7 @@ header {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background-color: #12003a;
+  background-color: var(--background-dark);
   border-radius: 15px;
 }
 
@@ -141,10 +141,10 @@ header {
   50% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    box-shadow: 0px 0px 0px 0px #004f55;
+    box-shadow: 0px 0px 0px 0px var(--primary-dark);
   }
   100% {
-    box-shadow: 6px 0px 0px 0px #004f55;
+    box-shadow: 6px 0px 0px 0px var(--primary-dark);
   }
 }
 
@@ -156,24 +156,24 @@ header {
   50% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    box-shadow: 0px 0px 0px 0px #c60011;
+    box-shadow: 0px 0px 0px 0px var(--secondary-dark);
   }
   100% {
-    box-shadow: -6px 0px 0px 0px #c60011;
+    box-shadow: -6px 0px 0px 0px var(--secondary-dark);
   }
 }
 
 .assistant {
   align-self: flex-start;
-  background: #ff597e;
+  background: var(--secondary-color);
   animation: slideUpFadeAssistant 0.8s ease-in-out forwards;
   color: #12003a;
 }
 
 .user {
   align-self: flex-end;
-  background: #01b6c3;
-  color: #ffffff;
+  background: var(--primary-color);
+  color: var(--primary-text);
   animation: slideUpFadeUser 0.8s ease-in-out forwards;
 }
 
@@ -182,7 +182,7 @@ form {
   gap: 10px;
   padding-top: 14px;
   padding-bottom: 20px;
-  background: #1b0059;
+  background: var(--background-color);
 }
 
 textarea {
@@ -190,15 +190,15 @@ textarea {
   min-height: 48px;
   max-height: 140px;
   padding: 12px;
-  border: 2px solid #08cadc;
+  border: 2px solid var(--primary-color);
   border-radius: 8px;
   transition-timing-function: ease;
   transition-duration: .2s;
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
   resize: none;
   font-size: 15px;
-  background: #12003a;
-  color: #ffffff;
+  background: var(--background-dark);
+  color: var(--primary-text);
 }
 
 textarea::placeholder {
@@ -207,7 +207,7 @@ textarea::placeholder {
 
 textarea:focus {
   outline: none;
-  border: 2px solid #ff597e;
+  border: 2px solid var(--secondary-color);
   transition-timing-function: ease;
   transition-duration: .2s;
 }
@@ -217,8 +217,8 @@ button {
   border: 0;
   border-radius: 8px;
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
-  background: #08cadc;
-  color: #ffffff;
+  background: var(--primary-color);
+  color: var(--primary-text);
   font-weight: 700;
   cursor: pointer;
   transition-timing-function: ease;
@@ -226,8 +226,8 @@ button {
 }
 
 button:hover {
-  background: #ff597e;
-  color: #ffffff;
+  background: var(--secondary-color);
+  color: var(--primary-text);
   transition-timing-function: ease;
   transition-duration: .2s;
   scale: 105%;
@@ -238,13 +238,13 @@ button:active {
 }
 
 button:disabled {
-  background: #12003a;
+  background: var(--background-dark);
   cursor: wait;
 }
 
 .typing-indicator {
   align-self: flex-start;
-  background: #ff597e;
+  background: var(--secondary-color);
   padding: 14px 18px;
   border-radius: 8px;
   display: flex;
@@ -255,7 +255,7 @@ button:disabled {
 .typing-indicator span {
   width: 8px;
   height: 8px;
-  background: #12003a;
+  background: var(--background-dark);
   border-radius: 50%;
   animation: typing-bounce 1.2s infinite ease-in-out;
 }
@@ -273,7 +273,7 @@ button:disabled {
   overflow-y: auto;
   padding: 22px;
   margin-bottom: 30px;
-  background-color: #12003a;
+  background-color: var(--background-dark);
   border-radius: 15px;
   white-space: pre-wrap;
   font-size: 15px;
