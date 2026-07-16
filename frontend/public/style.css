@@ -12,17 +12,43 @@ body {
 }
 
 :root {
+  --primary-color: #1b0059;
+  --primary-dark: #120038;
+  --secondary-color: #08cadc;
+  --secondary-dark: #018692;
+  --tertiary-color: #ff7896;
+  --tertiary-dark: #a94157;
+  --accent-color: #08cadc;
+  --background-color: #ffffff;
+  --background-dark: #1b00590f;
+  --text-color: #ffffff;
+  --text-color-alt: #000000;
+
+
+  --primary-color: #1b0059;
+  --primary-dark: #120038;
+  --secondary-color: #1b0059;
+  --secondary-dark: #7353b3;
+  --tertiary-color: #cbcbcb;
+  --tertiary-dark: #606060;
+  --accent-color: #ff597e;
+  --background-color: #ffffff;
+  --background-dark: #ffffff;
+  --text-color: #ffffff;
+  --text-color-alt: #000000;
+
   --primary-color: #0096d9;
   --primary-dark: #004a6e;
-  --secondary-color: #cbcbcb;
-  --secondary-dark: #606060;
+  --secondary-color: #0096d9;
+  --secondary-dark: #004a6e;
+  --tertiary-color: #cbcbcb;
+  --tertiary-dark: #606060;
   --accent-color: #a57bd0;;
   --background-color: #ffffff;
   --background-dark: #f1f1f1;
   --text-color: #ffffff;
   --text-color-alt: #000000;
 }
-
 
 .app {
   width: min(900px, 100%);
@@ -97,7 +123,7 @@ header {
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
   padding: 6px 14px;
   font-size: 13px;
-  background: var(--secondary-color);
+  background: var(--tertiary-color);
   color: var(--text-color-alt);
   border-radius: 6px;
   transition-timing-function: ease;
@@ -142,10 +168,9 @@ header {
   50% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    box-shadow: 0px 0px 0px 0px var(--primary-dark);
   }
   100% {
-    box-shadow: 6px 0px 0px 0px var(--primary-dark);
+    box-shadow: 6px 0px 0px 0px var(--secondary-dark);
   }
 }
 
@@ -157,23 +182,22 @@ header {
   50% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    box-shadow: 0px 0px 0px 0px var(--secondary-dark);
   }
   100% {
-    box-shadow: -6px 0px 0px 0px var(--secondary-dark);
+    box-shadow: -6px 0px 0px 0px var(--tertiary-dark);
   }
 }
 
 .assistant {
   align-self: flex-start;
-  background: var(--secondary-color);
+  background: var(--tertiary-color);
   animation: slideUpFadeAssistant 0.8s ease-in-out forwards;
-  color: #12003a;
+  color: var(--text-color-alt);
 }
 
 .user {
   align-self: flex-end;
-  background: var(--primary-color);
+  background: var(--secondary-color);
   color: var(--text-color);
   animation: slideUpFadeUser 0.8s ease-in-out forwards;
 }
@@ -235,7 +259,7 @@ button:active {
 }
 
 button:disabled {
-  background: var(--background-dark);
+  background: var(--tertiary-color);
   cursor: wait;
 }
 
@@ -277,6 +301,6 @@ button:disabled {
   line-height: 1.6;
 }
 #summary-box.placeholder {
-  color: #ffffffc7;
+  color: var(--background-dark);
   font-style: italic;
 }

@@ -1,4 +1,5 @@
 const INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?";
+const local = "api"/*"http://127.0.0.1:3001";*/
 
 const chatEl = document.getElementById("chat");
 const chatForm = document.getElementById("form");
@@ -21,7 +22,7 @@ function appendMessage(role, content) {
 }
 
 async function startNewSession() {
-  const res = await fetch("http://127.0.0.1:3001/new_chat", { method: "POST" });
+  const res = await fetch(`${local}/new_chat`, { method: "POST" });
   const data = await res.json();
   sessionId = data.session_id;
   localStorage.setItem("session_id", sessionId);
@@ -69,7 +70,7 @@ chatForm.addEventListener("submit", async function (e) {
   chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
 
   try {
-    const res = await fetch("http://127.0.0.1:3001/string", {
+    const res = await fetch(`${local}/string`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, input: userInputValue }),

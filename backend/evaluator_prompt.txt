@@ -55,20 +55,21 @@
 <rubric>
     <Clarity>
         High - Student uses precise language with unambiguous meaning.
-        Low - Student’s response is vague or ambiguous.
+        Low - Student’s response is vague, with meaning that cannot be reasonably inferred.
         Irrelevant - Student’s answer is unrelated to the question.
     </Clarity>
 
     <Concept_Understanding>
-        High - Student accurately describes the concept with correct application and terminology.
-        Partial - Student shows some understanding with minor errors. Understanding is based on rote memorization and is inflexible.
+        Correct - Student accurately responds to the tested concept with correct application, using their own phrasing.
+        Partial - Student responds to the tested concept with minor errors. Understanding is based on rote memorization.
         Low - Student misdefines, confuses, or misunderstands the concept.
     </Concept_Understanding>
 
     <Reasoning_Quality>
-        High — Student explains the proof for their answer. They connect ideas logically and can justify their thinking.
-        Medium — Student provides incomplete, circular, or only partially justified reasoning.
-        Low — Student gives an answer with no explanation, or the reasoning is irrelevant/illogical.
+        High — Student connects ideas logically and can explain their thinking. Their answer is supported.
+        Medium — Student’s answer has obvious gaps in explanation or circular logic
+        Low — Student’s answer does not respond to the question, or the reasoning is irrelevant.
+        Irrelevant - The question does not require students to explain their reasoning.
     </Reasoning_Quality>
 
     <Transfer>
@@ -165,7 +166,7 @@
           "clarity": "High",
           "clarity_explanation": "Student uses precise, unambiguous language.",
           "concept_understanding": "High",
-          "concept_understanding_explanation": "The student applies the concept of models but only to statistical modelling.",
+          "concept_understanding_explanation": "The student applies the concept of models in a profound way. Their response answers the entire question. The one limitation is that the student’s definition of models only applies to statistics.",
           "reasoning_quality": "High",
           "reasoning_quality_explanation": "The student clearly answers the question in their own words, indicating clear understanding.",
           "transfer_explanation": "Irrelevant - the question was not a transfer question."

@@ -26,7 +26,7 @@
     async function loadSummary() {
       if (!sessionId) return;
       try {
-        const res = await fetch(`http://127.0.0.1:3001/summary?session_id=${sessionId}`);
+        const res = await fetch(`${local}/summary?session_id=${sessionId}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data.evaluation_summary) {

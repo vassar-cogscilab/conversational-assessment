@@ -241,15 +241,17 @@ def get_string():
             clarity = 0
             task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
         else:
-            task = ""
+            task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     elif session["rubric_scores"][-1].get("concept_understanding") == "Partial":
         concept = 2
         clarity = 0
         task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     else:
-        task = ""
+        task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
 
     session["progress"] = [concept, clarity, reason]
+
+    print(task)
 
     next_question = call_claude(session["messages"], questioner_prompt, task=task, rag_context=rag_context)
 
