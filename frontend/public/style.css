@@ -265,7 +265,7 @@ button:disabled {
 
 .typing-indicator {
   align-self: flex-start;
-  background: var(--secondary-color);
+  background: var(--tertiary-color);
   padding: 14px 18px;
   border-radius: 8px;
   display: flex;
