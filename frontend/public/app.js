@@ -21,7 +21,7 @@ function appendMessage(role, content) {
 }
 
 async function startNewSession() {
-  const res = await fetch("api/new_chat", { method: "POST" });
+  const res = await fetch("http://127.0.0.1:3001/new_chat", { method: "POST" });
   const data = await res.json();
   sessionId = data.session_id;
   localStorage.setItem("session_id", sessionId);
@@ -69,7 +69,7 @@ chatForm.addEventListener("submit", async function (e) {
   chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
 
   try {
-    const res = await fetch("api/string", {
+    const res = await fetch("http://127.0.0.1:3001/string", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, input: userInputValue }),

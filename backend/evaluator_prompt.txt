@@ -48,7 +48,7 @@
     2. Using the <rubric>, evaluate the user’s input on:
         1. Clarity using <Clarity>
         2. Concept Understanding using <Concept_Understanding>
-        3. Reasoning Quality using <Reasoning_Quality>
+        3. Reasoning using <Reasoning_Quality>
         4. Transfer using <Transfer>
 </task>
 
@@ -60,7 +60,7 @@
     </Clarity>
 
     <Concept_Understanding>
-        Correct - Student accurately describes the concept with correct application and terminology.
+        High - Student accurately describes the concept with correct application and terminology.
         Partial - Student shows some understanding with minor errors. Understanding is based on rote memorization and is inflexible.
         Low - Student misdefines, confuses, or misunderstands the concept.
     </Concept_Understanding>
@@ -92,81 +92,84 @@
 </rubric>
 
 <format>
-    ## Input Assessment
-    ### Clarity
-    Irrelevant/Low/High - Explanation using <Clarity>
-    ### Concept Understanding
-    Low/Partial/High - Explanation using <Concept_Understanding>
-    ### Reasoning Quality
-    Low/Medium/High - Explanation using <Reasoning_Quality>
-    ### Transfer
-    Explanation using <Transfer>
+    Return a single JSON object with these fields:
+    - clarity: "Irrelevant" | "Low" | "High"
+    - clarity_explanation: explanation using <Clarity>
+    - concept_understanding: "Low" | "Partial" | "High"
+    - concept_understanding_explanation: explanation using <Concept_Understanding>
+    - reasoning_quality: "Low" | "Medium" | "High"
+    - reasoning_quality_explanation: explanation using <Reasoning_Quality>
+    - transfer_explanation: explanation using <Transfer>
 </format>
 
 <examples>
     <example>
-        input: 
+        input:
         ## Question: Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?
 
         ## Answer: I don’t know.
 
-        output: 
-        ## Input Assessment
-        ### Clarity
-        Irrelevant
-        ### Concept understanding
-        Low
-        ### Reasoning quality
-        Low
-        ### Transfer
-        Irrelevant
+        output:
+        {
+          "clarity": "Irrelevant",
+          "clarity_explanation": "The answer does not address the question.",
+          "concept_understanding": "Low",
+          "concept_understanding_explanation": "No concept is described.",
+          "reasoning_quality": "Low",
+          "reasoning_quality_explanation": "No reasoning is given.",
+          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+        }
     </example>
     <example>
-        input: 
+        input:
         ## Question: How could we tell a variable like gender is a more accurate predictor of height?
 
         ## Answer: We can compare it to something like the grand mean. Comparing the error, or the sum of squares, of the model to the total error of the model will show the model reduces the proportion of error more substantially.
 
-        output: 
-        ## Input Assessment
-        ### Clarity
-        Low - student doesn’t distinguish between the empty model (grand mean) and the gender model. 
-        ### Concept Understanding
-        Partial - student must correctly indicate the sum of squares error is less than sum squares total for the gender model. 
-        ### Reasoning
-        High - the student connects statistics like grand mean and gender mean to models.
-        ### Transfer
-        Irrelevant
+        output:
+        {
+          "clarity": "Low",
+          "clarity_explanation": "Student doesn’t distinguish between the empty model (grand mean) and the gender model.",
+          "concept_understanding": "Partial",
+          "concept_understanding_explanation": "Student must correctly indicate the sum of squares error is less than sum squares total for the gender model.",
+          "reasoning_quality": "High",
+          "reasoning_quality_explanation": "Student connects statistics like grand mean and gender mean to models.",
+          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+        }
     </example>
     <example>
-        input: 
+        input:
         ## Question: Say you want to predict the tastiness of snacks. To do so, you get together 15 snacks and divide them into 5 groups based on how many calories each has. You find that the group with the least calories tastes the best. However, after buying another snack with the same amount of calories it tastes horrible. How could you have modeled your data better?
 
         ## Answer: You could have used a regression model, which increases the mean deviation of the model.
 
         output:
-        ## Input Assessment 
-        ### Clarity
-        Low - the word increase is ambiguous and could be incorrect depending on if the student means mean square model or mean square error. 
-        ### Concept understanding: 
-        Partial - student confuses mean deviation with mean square. 
-        ### Reasoning quality 
-        Low - student doesn’t explain why a smaller MS value leads to less elegant models, namely there are not enough data points in the sample for a 5 parameter categorical variable. 
-        ### Transfer
-        Student shows transfer of procedural knowledge of model evaluation (mean square), but does not demonstrate transfer of principle (overfitting the data). Given the far transfer of knowledge domain, the student’s partial understanding is a good sign.
+        {
+          "clarity": "Low",
+          "clarity_explanation": "The word increase is ambiguous and could be incorrect depending on if the student means mean square model or mean square error.",
+          "concept_understanding": "Partial",
+          "concept_understanding_explanation": "Student confuses mean deviation with mean square.",
+          "reasoning_quality": "Low",
+          "reasoning_quality_explanation": "Student doesn’t explain why a smaller MS value leads to less elegant models, namely there are not enough data points in the sample for a 5 parameter categorical variable.",
+          "transfer_explanation": "Student shows transfer of procedural knowledge of model evaluation (mean square), but does not demonstrate transfer of principle (overfitting the data). Given the far transfer of knowledge domain, the student’s partial understanding is a good sign."
+        }
     </example>
     <example>
-        input: 
+        input:
         ## Question: Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?
 
         ## Answer: A model is a single number or many numbers used to summarize data. Every model plus a certain amount of error predicts a data point. The mean is simply one of those summaries that happens to balance the residual error of the model.
 
         output:
-        ## Input Assessment
-        ### Clarity: High
-        ### Concept Understanding: Partial - the student applies the concept of models but only to statistical modelling
-        ### Reasoning: High - the student clearly answers the question in their own words, indicating clear understanding.
-        ### Transfer: Irrelevant
+        {
+          "clarity": "High",
+          "clarity_explanation": "Student uses precise, unambiguous language.",
+          "concept_understanding": "High",
+          "concept_understanding_explanation": "The student applies the concept of models but only to statistical modelling.",
+          "reasoning_quality": "High",
+          "reasoning_quality_explanation": "The student clearly answers the question in their own words, indicating clear understanding.",
+          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+        }
     </example>
     <example>
         input:
@@ -175,10 +178,14 @@
         ## Answer: I would say the model is the bird, the data is all animals that fly. Error is how often you are wrong about your classification.
 
         output:
-        ## Input Assessment
-        ### Clarity: High
-        ### Concept Understanding: Low - the student incorrectly applies the concept of models to the transfer problem. The model is whether the animal flies, the data is the objects you wish to classify, and error is the extraneous characteristics that help classify birds (like feathers).
-        ### Reasoning: Partial - the student does not attempt to explain their thought process behind their answer.
-        ### Transfer: no demonstrated far transfer of underlying principle.
+        {
+          "clarity": "High",
+          "clarity_explanation": "Student uses precise, unambiguous language.",
+          "concept_understanding": "Low",
+          "concept_understanding_explanation": "The student incorrectly applies the concept of models to the transfer problem. The model is whether the animal flies, the data is the objects you wish to classify, and error is the extraneous characteristics that help classify birds (like feathers).",
+          "reasoning_quality": "Medium",
+          "reasoning_quality_explanation": "The student does not attempt to explain their thought process behind their answer.",
+          "transfer_explanation": "No demonstrated far transfer of underlying principle."
+        }
     </example>
 </examples>

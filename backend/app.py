@@ -80,8 +80,9 @@ def get_rag_context(query: str, k: int = 4) -> str:
     return "\n".join(blocks)
 
 
-def call_claude(messages, prompt, rag_context=None):
+def call_claude(messages, prompt, task=None, rag_context=None, output_schema=None):
     msgs = list(messages)
+    task = f"\n\n<task>\n{task or ''}\n</task>"
     if rag_context:
         tag = f"\n\n<verified_context>\n{rag_context}\n</verified_context>"
         if msgs and msgs[-1]["role"] == "user":
@@ -89,13 +90,57 @@ def call_claude(messages, prompt, rag_context=None):
         else:
             msgs.append({"role": "user", "content": tag})
 
+    # Only evaluator calls pass output_schema today — questioner/summarizer
+    # calls leave it unset and get the same free-text behavior as before.
+    kwargs = {}
+    if output_schema:
+        kwargs["output_config"] = {"format": {"type": "json_schema", "schema": output_schema}}
+
     response = client.messages.create(
         model="claude-sonnet-5",
         max_tokens=1024,
-        system=[{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}],
+        system=[{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}},
+                {"type": "text", "text": task}],
         messages=msgs,
+        **kwargs,
     )
     return next(block.text for block in response.content if block.type == "text")
+
+
+# Enforced by output_config.format on the evaluator call (see call_claude) —
+# these are the only values Claude can return for each field, so there's no
+# more regex parsing of free-text markdown headings.
+EVALUATOR_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "clarity": {"type": "string", "enum": ["High", "Low", "Irrelevant"]},
+        "clarity_explanation": {"type": "string"},
+        "concept_understanding": {"type": "string", "enum": ["High", "Partial", "Low"]},
+        "concept_understanding_explanation": {"type": "string"},
+        "reasoning_quality": {"type": "string", "enum": ["High", "Medium", "Low"]},
+        "reasoning_quality_explanation": {"type": "string"},
+        "transfer_explanation": {"type": "string"},
+    },
+    "required": [
+        "clarity", "clarity_explanation",
+        "concept_understanding", "concept_understanding_explanation",
+        "reasoning_quality", "reasoning_quality_explanation",
+        "transfer_explanation",
+    ],
+    "additionalProperties": False,
+}
+
+
+def format_evaluation(parsed: dict) -> str:
+    # Re-render the evaluator's structured output as the markdown shape the
+    # questioner's own few-shot examples expect (see questioner_prompt.txt),
+    # so questioner_prompt.txt doesn't need to change.
+    return (
+        f"### Clarity\n{parsed['clarity']} - {parsed['clarity_explanation']}\n"
+        f"### Concept Understanding\n{parsed['concept_understanding']} - {parsed['concept_understanding_explanation']}\n"
+        f"### Reasoning Quality\n{parsed['reasoning_quality']} - {parsed['reasoning_quality_explanation']}\n"
+        f"### Transfer\n{parsed['transfer_explanation']}"
+    )
 
 
 @app.get("/")
@@ -123,6 +168,8 @@ def new_chat():
         "turns": 0,
         "current_question": INITIAL_MESSAGE,
         "rag_contexts": [],
+        "rubric_scores": [],
+        "progress": [0, 0, 0],  # [concept, clarity, reason] counters, see get_string()
     }
     save_sessions()
     return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
@@ -147,15 +194,64 @@ def get_string():
         {"role": "assistant", "content": "## Question: " + current_question},
         {"role": "user", "content": "## Answer: " + user_input},
     ]
-    claude_evaluation = call_claude(eval_messages, evaluator_prompt, rag_context=rag_context)
-    print(f"Claude evaluation: {claude_evaluation}")
+    claude_evaluation = call_claude(
+        eval_messages, evaluator_prompt, rag_context=rag_context, output_schema=EVALUATOR_SCHEMA
+    )
+    parsed_evaluation = json.loads(claude_evaluation)
+    session.setdefault("rubric_scores", []).append({
+        "clarity": parsed_evaluation["clarity"],
+        "concept_understanding": parsed_evaluation["concept_understanding"],
+        "reasoning_quality": parsed_evaluation["reasoning_quality"],
+    })
 
     session["messages"].append({
         "role": "user",
-        "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + claude_evaluation,
+        "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + format_evaluation(parsed_evaluation),
     })
 
-    next_question = call_claude(session["messages"], questioner_prompt, rag_context=rag_context)
+    # [concept, clarity, reason] counters carried over from the previous turn —
+    # loaded from the session so progress toward a transition survives across
+    # requests instead of resetting to 0 every time.
+    concept, clarity, reason = session.get("progress", [0, 0, 0])
+
+    if concept == 2 or clarity == 2 or reason == 2:
+        task = "- Transition to the next concept to test student's understanding of data = model + error."
+        concept = clarity = reason = 0
+    elif session["rubric_scores"][-1].get("clarity") == "Low":
+        task = "- Rephrase the question without hinting at the correct answer.\n- Target the ambiguity of the user's input."
+        clarity += 1
+    elif session["rubric_scores"][-1].get("clarity") == "Irrelevant":
+        task = "- Rephrase the question using different, familiar examples."
+        clarity += 1
+    elif session["rubric_scores"][-1].get("concept_understanding") == "Low":
+        task = "- Rephrase the previous question with simpler, more familiar terms.\n- Probe for any confusion of concepts\n- Do not prompt the right answer."
+        concept += 1
+        clarity = 0
+    elif session["rubric_scores"][-1].get("reasoning_quality") == "Low":
+        task = "- Ask student to explain their reasoning with a question that probes their faulty logic.\n-Do not prompt the right answer."
+        reason += 1
+        clarity = 0
+    elif session["rubric_scores"][-1].get("concept_understanding") == "High":
+        if session["rubric_scores"][-1].get("reasoning_quality") == "High":
+            concept = 2
+            clarity = 0
+            task = "- ask a far context knowledge transfer question using <ask_knowledge_transfer_questions>."
+        elif session["rubric_scores"][-1].get("reasoning_quality") == "Medium":
+            concept = 2
+            clarity = 0
+            task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
+        else:
+            task = ""
+    elif session["rubric_scores"][-1].get("concept_understanding") == "Partial":
+        concept = 2
+        clarity = 0
+        task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
+    else:
+        task = ""
+
+    session["progress"] = [concept, clarity, reason]
+
+    next_question = call_claude(session["messages"], questioner_prompt, task=task, rag_context=rag_context)
 
     session["messages"].append({"role": "assistant", "content": next_question})
     session["current_question"] = next_question
