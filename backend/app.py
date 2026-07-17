@@ -60,7 +60,7 @@ BASE_MESSAGES = [
 ]
 
 
-def get_rag_context(query: str, k: int = 4) -> str:
+def get_rag_context(query: str, k: int = 4) -> list[str]:
     # RAG embeddings run through Ollama over an SSH tunnel to a remote
     # research machine — treat that link as unreliable and degrade to no
     # context rather than 500ing the student's turn if it's down.
@@ -68,16 +68,24 @@ def get_rag_context(query: str, k: int = 4) -> str:
         results = rag_db.search(query, k=k)
     except Exception as exc:
         print(f"RAG lookup failed, continuing without context: {exc}")
-        return ""
+        return []
+    # contextualized_content is a retrieval aid baked into the embedding, not
+    # something the model needs to read — only the source text goes in the
+    # prompt. Dedup guards against near-identical/overlapping chunks (from
+    # the chunker's sliding window) landing in the same top-k result.
+    seen = set()
     blocks = []
     for match in results:
-        meta = match["metadata"]
-        blocks.append(
-            f"--- Context Segment ---\n"
-            f"Context: {meta['contextualized_content']}\n"
-            f"Content:\n{meta['original_content']}\n"
-        )
-    return "\n".join(blocks)
+        content = match["metadata"]["original_content"]
+        if content in seen:
+            continue
+        seen.add(content)
+        blocks.append(content)
+    return blocks
+
+
+def render_rag_blocks(blocks: list[str]) -> str:
+    return "\n".join(f"--- Context Segment ---\n{block}\n" for block in blocks)
 
 
 def call_claude(messages, prompt, task=None, rag_context=None, output_schema=None):
@@ -98,12 +106,17 @@ def call_claude(messages, prompt, task=None, rag_context=None, output_schema=Non
 
     response = client.messages.create(
         model="claude-sonnet-5",
-        max_tokens=1024,
+        max_tokens=4096,
         system=[{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}},
                 {"type": "text", "text": task}],
         messages=msgs,
         **kwargs,
     )
+    if response.stop_reason == "max_tokens":
+        raise RuntimeError(
+            "Claude response was truncated (hit max_tokens) before finishing — "
+            "increase max_tokens in call_claude."
+        )
     return next(block.text for block in response.content if block.type == "text")
 
 
@@ -187,8 +200,9 @@ def get_string():
     session = sessions[session_id]
     current_question = session["current_question"]
 
-    rag_context = get_rag_context(user_input)
-    session["rag_contexts"].append(rag_context)
+    rag_blocks = get_rag_context(user_input)
+    session["rag_contexts"].append(rag_blocks)
+    rag_context = render_rag_blocks(rag_blocks)
 
     eval_messages = [
         {"role": "assistant", "content": "## Question: " + current_question},
@@ -215,7 +229,7 @@ def get_string():
     concept, clarity, reason = session.get("progress", [0, 0, 0])
 
     if concept == 2 or clarity == 2 or reason == 2:
-        task = "- Transition to the next concept to test student's understanding of data = model + error."
+        task = "- Transition to the next concept to test student's understanding on with <clusters>."
         concept = clarity = reason = 0
     elif session["rubric_scores"][-1].get("clarity") == "Low":
         task = "- Rephrase the question without hinting at the correct answer.\n- Target the ambiguity of the user's input."
@@ -239,15 +253,15 @@ def get_string():
         elif session["rubric_scores"][-1].get("reasoning_quality") == "Medium":
             concept = 2
             clarity = 0
-            task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
+            task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
         else:
             task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     elif session["rubric_scores"][-1].get("concept_understanding") == "Partial":
         concept = 2
         clarity = 0
-        task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
+        task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
     else:
-        task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
+        task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
 
     session["progress"] = [concept, clarity, reason]
 
@@ -262,8 +276,20 @@ def get_string():
 
     claude_summary = None
 
-    if session["turns"] == 10:
-        all_rag = "\n\n".join(session["rag_contexts"])
+    if session["turns"] == 100:
+        # Pool every turn's retrieved blocks and dedupe across the whole
+        # session — consecutive turns on the same concept otherwise retrieve
+        # a lot of the same chunks, and joining them raw just repeats them.
+        seen = set()
+        unique_blocks = []
+        for turn_blocks in session["rag_contexts"]:
+            if isinstance(turn_blocks, str):  # legacy sessions predate this format
+                turn_blocks = [turn_blocks]
+            for block in turn_blocks:
+                if block not in seen:
+                    seen.add(block)
+                    unique_blocks.append(block)
+        all_rag = render_rag_blocks(unique_blocks)
         claude_summary = call_claude(session["messages"], summarizer_prompt, rag_context=all_rag)
         session["evaluation_summary"] = claude_summary
 

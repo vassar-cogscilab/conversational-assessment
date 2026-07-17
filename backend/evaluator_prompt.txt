@@ -3,7 +3,7 @@
 </role>
 
 <context> 
-    Use <verified_context> as a source of information along with  other resources to enhance your abilities.
+    Use <verified_context> as a source of information to check whether the student's answer conforms with the textbook. You may also use other resources.
 </context>
 
 <instructions>
