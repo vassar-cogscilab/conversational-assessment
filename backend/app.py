@@ -229,10 +229,10 @@ def get_string():
     concept, clarity, reason = session.get("progress", [0, 0, 0])
 
     if concept == 2 or clarity == 2 or reason == 2:
-        task = "- Transition to the next concept to test student's understanding on with <clusters>."
+        task = "- Naturally transition to the next concept to test student's understanding on with <clusters>."
         concept = clarity = reason = 0
     elif session["rubric_scores"][-1].get("clarity") == "Low":
-        task = "- Rephrase the question without hinting at the correct answer.\n- Target the ambiguity of the user's input."
+        task = "- Rephrase the question by indicating the element that needs clarification.\n- Target the ambiguity of the user's input."
         clarity += 1
     elif session["rubric_scores"][-1].get("clarity") == "Irrelevant":
         task = "- Rephrase the question using different, familiar examples."
@@ -249,17 +249,17 @@ def get_string():
         if session["rubric_scores"][-1].get("reasoning_quality") == "High":
             concept = 2
             clarity = 0
-            task = "- ask a far context knowledge transfer question using <ask_knowledge_transfer_questions>."
+            task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a far context knowledge transfer question using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a question probing at student's deep conceptual understanding of data = model + error."
         elif session["rubric_scores"][-1].get("reasoning_quality") == "Medium":
             concept = 2
             clarity = 0
-            task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
+            task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a broader question probing at student's understanding of data = model + error."
         else:
             task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     elif session["rubric_scores"][-1].get("concept_understanding") == "Partial":
         concept = 2
         clarity = 0
-        task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
+        task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a nearer procedure transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     else:
         task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
 
@@ -276,7 +276,7 @@ def get_string():
 
     claude_summary = None
 
-    if session["turns"] == 100:
+    if session["turns"] == 10:
         # Pool every turn's retrieved blocks and dedupe across the whole
         # session — consecutive turns on the same concept otherwise retrieve
         # a lot of the same chunks, and joining them raw just repeats them.

@@ -128,6 +128,6 @@
         ### Transfer
         Student shows transfer of procedural knowledge of model evaluation (mean square), but does not demonstrate transfer of principle (the law of large numbers for sample size). Given the far transfer of knowledge domain, the student’s partial understanding is a good sign.
 
-        output: But what exactly do you mean by “increase”?
+        output: I like what you're thinking, but I'm a little confused about what you mean by “increase”? Can you please explain it?
     </example>
 </question_examples>

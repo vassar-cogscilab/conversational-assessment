@@ -11,6 +11,7 @@
     - Use the whole conversation to generate a final summary of student understanding of the clusters from <clusters>.
     - Send the summary to an instructor of the student.
     - Consider language barriers, wording difficulties, and incomplete expressions before inferring misunderstanding.
+    - Be very brief in each explanation so as not exceed token limit of 4096.
 </instructions>
 
 <clusters>
