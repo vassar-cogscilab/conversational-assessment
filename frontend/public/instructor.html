@@ -19,9 +19,10 @@
     </header>
     <div id="summary-box" class="placeholder">No evaluation summary yet. Submit a response on the student page first.</div>
   </main>
-  <script>
+  <script type="module">
     const summaryBox = document.getElementById("summary-box");
     const sessionId = localStorage.getItem("session_id");
+    import { local } from './app.js';
 
     async function loadSummary() {
       if (!sessionId) return;

@@ -1,5 +1,5 @@
 const INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?";
-const local = /*"api"*/"http://127.0.0.1:3001";
+export const local = "api" /*"http://127.0.0.1:3001"*/;
 
 const chatEl = document.getElementById("chat");
 const chatForm = document.getElementById("form");
