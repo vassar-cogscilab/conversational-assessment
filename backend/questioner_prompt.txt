@@ -25,31 +25,34 @@
 
 <clusters>
     # Understand data = model + error
-    ## Cluster 1: Understand concept of statistical models
-    - Map DATA = MODEL + ERROR in different contexts - Ch. 5-9
-    - Define and use the concept of a statistical model as a function that produces a predicted score for each observation - Ch. 5, 7-9
-    - Differentiate between the empty model and a more complex model - Ch. 5, 7-9
-    - Identify the most appropriate model to use based on how variables are measured (e.g., group versus regression models) - Ch. 5,7-9
-    - Distinguish between a model of data and a model of DGP - Ch. 5-9
-    - Identify that the mean acts as a balancing point for (error) residuals in a distribution - Ch. 5
-    - Recognize that the best fitting model minimizes the appropriate measure of error (in this course, sum of squares; SS) - Ch. 6-9
-    - Understand the concept of “overfitting” a model - Ch. 8
+    <Cluster_1_Understand_concept_of_statistical_models>
+        - Map DATA = MODEL + ERROR in different contexts - Ch. 5-9
+        - Define and use the concept of a statistical model as a function that produces a predicted score for each observation - Ch. 5, 7-9
+        - Differentiate between the empty model and a more complex model - Ch. 5, 7-9
+        - Identify the most appropriate model to use based on how variables are measured (e.g., group versus regression models) - Ch. 5,7-9
+        - Distinguish between a model of data and a model of DGP - Ch. 5-9
+        - Identify that the mean acts as a balancing point for (error) residuals in a distribution - Ch. 5
+        - Recognize that the best fitting model minimizes the appropriate measure of error (in this course, sum of squares; SS) - Ch. 6-9
+        - Understand the concept of “overfitting” a model - Ch. 8
+    </Cluster_1_Understand_concept_of_statistical_models>
 
-    ## Cluster 2: Understand concept of error
-    - Visually intuit/ compare which models or distributions show more error - Ch. 5-9
-    - Define, calculate, and reason about residuals from models - Ch. 5-9
-    - Recognize that residuals aggregate to measures of error - Ch. 6-9
-    - Know that error from the empty model is all of the unexplained variation - Ch. 5-6
-    - Quantify aggregate error as Sum of Absolute Deviations (SAD), Sum of Squares (SS), variance, and standard deviation, and interpret these measures (R; e.g., supernova) - Ch. 6
-    - Recognize the pros and cons of different methods of quantifying error - Ch. 6
+    <Cluster_2_Understand_concept_of_error>
+        - Visually intuit/ compare which models or distributions show more error - Ch. 5-9
+        - Define, calculate, and reason about residuals from models - Ch. 5-9
+        - Recognize that residuals aggregate to measures of error - Ch. 6-9
+        - Know that error from the empty model is all of the unexplained variation - Ch. 5-6
+        - Quantify aggregate error as Sum of Absolute Deviations (SAD), Sum of Squares (SS), variance, and standard deviation, and interpret these measures (R; e.g., supernova) - Ch. 6
+        - Recognize the pros and cons of different methods of quantifying error - Ch. 6
+    </Cluster_2_Understand_concept_of_error>
 
-    ## Cluster 3: Understand the strength of models
-    - Know that sum of squares from the empty model (SS total) can be partitioned into error and model sums of squares - Ch. 7-9
-    - Recognize that SS total is determined by the outcome variable and so total variation for an outcome variable will be the same regardless of explanatory variables included in the model - Ch. 7-9
-    - Interpret visual representations of SS error, SS model, and SS total from empty, group, and regression models - Ch. 7-9
-    - Use SS, PRE, and F statistic to compare models appropriately - Ch. 7-9
-    - Calculate (e.g., find ANOVA tables; R) and interpret PRE and F statistic (R) - Ch. 7-9
-    - Explain the concept of degrees of freedom - Ch. 8-9
+    <Cluster_3_Understand_the_strength_of_models>
+        - Know that sum of squares from the empty model (SS total) can be partitioned into error and model sums of squares - Ch. 7-9
+        - Recognize that SS total is determined by the outcome variable and so total variation for an outcome variable will be the same regardless of explanatory variables included in the model - Ch. 7-9
+        - Interpret visual representations of SS error, SS model, and SS total from empty, group, and regression models - Ch. 7-9
+        - Use SS, PRE, and F statistic to compare models appropriately - Ch. 7-9
+        - Calculate (e.g., find ANOVA tables; R) and interpret PRE and F statistic (R) - Ch. 7-9
+        - Explain the concept of degrees of freedom - Ch. 8-9
+    </Cluster_3_Understand_the_strength_of_models>
 </clusters>
 
 <ask_knowledge_transfer_questions>

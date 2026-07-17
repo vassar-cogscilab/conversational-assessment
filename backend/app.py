@@ -223,45 +223,47 @@ def get_string():
         "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + format_evaluation(parsed_evaluation),
     })
 
+    task = "1. Gauge the student's understanding of data = model + error by questioning the student along the following lines:\n"
+
     # [concept, clarity, reason] counters carried over from the previous turn —
     # loaded from the session so progress toward a transition survives across
     # requests instead of resetting to 0 every time.
     concept, clarity, reason = session.get("progress", [0, 0, 0])
 
     if concept == 2 or clarity == 2 or reason == 2:
-        task = "- Naturally transition to the next concept to test student's understanding on with <clusters>."
+        task += "- Naturally transition to the next concept to test student's understanding on with <clusters>."
         concept = clarity = reason = 0
     elif session["rubric_scores"][-1].get("clarity") == "Low":
-        task = "- Rephrase the question by indicating the element that needs clarification.\n- Target the ambiguity of the user's input."
+        task += "- Rephrase the question by indicating the element that needs clarification.\n- Target the ambiguity of the user's input."
         clarity += 1
     elif session["rubric_scores"][-1].get("clarity") == "Irrelevant":
-        task = "- Rephrase the question using different, familiar examples."
+        task += "- Rephrase the question using different, familiar examples."
         clarity += 1
     elif session["rubric_scores"][-1].get("concept_understanding") == "Low":
-        task = "- Rephrase the previous question with simpler, more familiar terms.\n- Probe for any confusion of concepts\n- Do not prompt the right answer."
+        task += "- Rephrase the previous question with simpler, more familiar terms.\n- Probe for any confusion of concepts\n- Do not prompt the right answer."
         concept += 1
         clarity = 0
     elif session["rubric_scores"][-1].get("reasoning_quality") == "Low":
-        task = "- Ask student to explain their reasoning with a question that probes their faulty logic.\n-Do not prompt the right answer."
+        task += "- Ask student to explain their reasoning with a question that probes their faulty logic.\n-Do not prompt the right answer."
         reason += 1
         clarity = 0
     elif session["rubric_scores"][-1].get("concept_understanding") == "High":
         if session["rubric_scores"][-1].get("reasoning_quality") == "High":
             concept = 2
             clarity = 0
-            task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a far context knowledge transfer question using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a question probing at student's deep conceptual understanding of data = model + error."
+            task += "- ask a far context knowledge transfer question using <ask_knowledge_transfer_questions>."
         elif session["rubric_scores"][-1].get("reasoning_quality") == "Medium":
             concept = 2
             clarity = 0
-            task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a broader question probing at student's deep conceptual understanding of data = model + error."
+            task += "- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
         else:
-            task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
+            task += "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     elif session["rubric_scores"][-1].get("concept_understanding") == "Partial":
         concept = 2
         clarity = 0
-        task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a nearer procedure transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
+        task += "- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     else:
-        task = "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
+        task += "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
 
     session["progress"] = [concept, clarity, reason]
 
