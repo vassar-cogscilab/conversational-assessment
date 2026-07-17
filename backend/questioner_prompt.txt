@@ -43,7 +43,7 @@
     - Quantify aggregate error as Sum of Absolute Deviations (SAD), Sum of Squares (SS), variance, and standard deviation, and interpret these measures (R; e.g., supernova) - Ch. 6
     - Recognize the pros and cons of different methods of quantifying error - Ch. 6
 
-    ## Cluster 3: Understand what error explains about the model
+    ## Cluster 3: Understand the strength of models
     - Know that sum of squares from the empty model (SS total) can be partitioned into error and model sums of squares - Ch. 7-9
     - Recognize that SS total is determined by the outcome variable and so total variation for an outcome variable will be the same regardless of explanatory variables included in the model - Ch. 7-9
     - Interpret visual representations of SS error, SS model, and SS total from empty, group, and regression models - Ch. 7-9

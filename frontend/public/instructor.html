@@ -22,7 +22,7 @@
   <script type="module">
     const summaryBox = document.getElementById("summary-box");
     const sessionId = localStorage.getItem("session_id");
-    import { local } from './app.js';
+    const local ="api" /*"http://127.0.0.1:3001"*/;
 
     async function loadSummary() {
       if (!sessionId) return;

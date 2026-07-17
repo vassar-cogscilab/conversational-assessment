@@ -253,7 +253,7 @@ def get_string():
         elif session["rubric_scores"][-1].get("reasoning_quality") == "Medium":
             concept = 2
             clarity = 0
-            task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a broader question probing at student's understanding of data = model + error."
+            task = "- Choose between the following questions depending on the flow of the conversation:\n\t- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>.\n\tOR\n\t- ask a broader question probing at student's deep conceptual understanding of data = model + error."
         else:
             task = "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
     elif session["rubric_scores"][-1].get("concept_understanding") == "Partial":
