@@ -57,6 +57,7 @@
         High - Student uses precise language with unambiguous meaning.
         Low - Student’s response is vague, with meaning that cannot be reasonably inferred.
         Irrelevant - Student’s answer is unrelated to the question.
+        Typo - Student’s answer appears to be an accidental, incomplete submission (e.g., cut off mid-word or mid-thought, sent before the student finished typing) rather than a deliberate, complete response.
     </Clarity>
 
     <Concept_Understanding>
@@ -189,4 +190,21 @@
           "transfer_explanation": "No demonstrated far transfer of underlying principle."
         }
     </example>
+    <example>
+        input:
+        ## Question: Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?
+
+        ## Answer: A model is a
+
+        output:
+        {
+          "clarity": "Typo",
+          "clarity_explanation": "The answer cuts off mid-sentence, suggesting it was submitted accidentally before the student finished typing.",
+          "concept_understanding": "Low",
+          "concept_understanding_explanation": "Too incomplete to judge understanding.",
+          "reasoning_quality": "Low",
+          "reasoning_quality_explanation": "No reasoning is given.",
+          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+        }
+    </example>
 </examples>

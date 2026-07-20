@@ -126,7 +126,7 @@ def call_claude(messages, prompt, task=None, rag_context=None, output_schema=Non
 EVALUATOR_SCHEMA = {
     "type": "object",
     "properties": {
-        "clarity": {"type": "string", "enum": ["High", "Low", "Irrelevant"]},
+        "clarity": {"type": "string", "enum": ["High", "Low", "Irrelevant", "Typo"]},
         "clarity_explanation": {"type": "string"},
         "concept_understanding": {"type": "string", "enum": ["High", "Partial", "Low"]},
         "concept_understanding_explanation": {"type": "string"},
@@ -232,6 +232,9 @@ def get_string():
 
     if concept == 2 or clarity == 2 or reason == 2:
         task += "- Naturally transition to the next concept to test student's understanding on with <clusters>."
+        concept = clarity = reason = 0
+    elif session["rubric_scores"][-1].get("clarity") == "Typo":
+        task = "- Mention to the student you think they made a typo and give them chance to correct it.\n- Restate the previous question exactly as it was asked.\n- Do not treat this as a clarity, concept, or reasoning issue."
         concept = clarity = reason = 0
     elif session["rubric_scores"][-1].get("clarity") == "Low":
         task += "- Rephrase the question by indicating the element that needs clarification.\n- Target the ambiguity of the user's input."
