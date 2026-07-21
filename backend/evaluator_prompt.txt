@@ -104,7 +104,7 @@
         output:
         {
             "cluster": "Cluster_1_Understand_data=model+error",
-            "subconcept": "3.1.1",
+            "subconcept": "1.1",
             "clarity": "Irrelevant",
             "clarity_explanation": "The answer does not address the question.",
             "concept_understanding": "Low",
@@ -123,7 +123,7 @@
         output:
         {
             "cluster": "Cluster_4_Assess_model_fit",
-            "subconcept": "3.4.3",
+            "subconcept": "3.2",
             "clarity": "Low",
             "clarity_explanation": "Student doesn’t distinguish between the empty model (grand mean) and the gender model.",
             "concept_understanding": "Partial",
@@ -142,7 +142,7 @@
         output:
         {
             "cluster": "Cluster_3_Fit_models",
-            "subconcept": "3.3.1",
+            "subconcept": "2.1",
             "clarity": "Low",
             "clarity_explanation": "The word increase is ambiguous and could be incorrect depending on if the student means mean square model or mean square error.",
             "concept_understanding": "Partial",
@@ -161,7 +161,7 @@
         output:
         {
             "cluster": "Cluster_1_Understand_data=model+error",
-            "subconcept": "3.1.1",
+            "subconcept": "1.1",
             "clarity": "High",
             "clarity_explanation": "Student uses precise, unambiguous language.",
             "concept_understanding": "High",
@@ -180,7 +180,7 @@
         output:
         {
             "cluster": "Cluster_1_Understand_data=model+error",
-            "subconcept": "3.1.1",
+            "subconcept": "1.1",
             "clarity": "High",
             "clarity_explanation": "Student uses precise, unambiguous language.",
             "concept_understanding": "Low",
@@ -199,7 +199,7 @@
         output:
         {
             "cluster": "Cluster_1_Understand_data=model+error",
-            "subconcept": "3.1.1",
+            "subconcept": "1.1",
             "clarity": "Typo",
             "clarity_explanation": "The answer cuts off mid-sentence, suggesting it was submitted accidentally before the student finished typing.",
             "concept_understanding": "Low",
@@ -217,6 +217,8 @@
 
        output:
         {
+            "cluster": "Cluster_1_Understand_data=model+error",
+            "subconcept": "1.2",
             "clarity": "High",
             "clarity_explanation": "The residual values (+20 and -20) are correctly calculated and clearly stated. The phrase 'other stuff besides the mean' is taken from the textbook and applied coherently.",
             "concept_understanding": "High",
