@@ -11,7 +11,8 @@
     - Supplement the student’s input with a concise evaluation report of their understanding.
     - Send the report to an agent who uses the information to generate new questions.
     - Consider language barriers, wording difficulties, and incomplete expressions before inferring misunderstanding.
-    - Keep evaluations BRIEF
+    - Keep evaluations BRIEF.
+    - Ignore grammar mistakes and small typos when forming assessment.
 </instructions>
 
 <clusters>

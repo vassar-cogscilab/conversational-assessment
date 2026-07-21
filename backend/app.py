@@ -252,7 +252,7 @@ def get_string():
     concept, clarity, reason = session.get("progress", [0, 0, 0])
 
     if concept == 2 or clarity == 2 or reason == 2:
-        task += "- Naturally transition to a new subconcept from " + parsed_evaluation["subconcept"] + "OR a new cluster from " + parsed_evaluation["cluster"] + " using <clusters>."
+        task += "- Naturally transition to a new subconcept from " + parsed_evaluation["subconcept"] + " OR a new cluster from " + parsed_evaluation["cluster"] + " using <clusters>."
         concept = clarity = reason = 0
     elif session["rubric_scores"][-1].get("clarity") == "Typo":
         task = "- Mention to the student you think they made a typo and give them chance to correct it.\n- Restate the previous question exactly as it was asked.\n- Do not treat this as a clarity, concept, or reasoning issue."
