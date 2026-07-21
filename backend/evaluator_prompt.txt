@@ -7,7 +7,7 @@
 </context>
 
 <instructions>
-    - From <clusters>, use relevant sub-concepts to evaluate students.
+    - Using <clusters>, identify the relevant cluster and sub-concept from the student's response.
     - Supplement the student’s input with a concise evaluation report of their understanding.
     - Send the report to an agent who uses the information to generate new questions.
     - Consider language barriers, wording difficulties, and incomplete expressions before inferring misunderstanding.
@@ -15,32 +15,22 @@
 </instructions>
 
 <clusters>
-    # Understand data = model + error
-    ## Cluster 1: Understand concept of statistical models
-    - Map DATA = MODEL + ERROR in different contexts - Ch. 5-9
-    - Define and use the concept of a statistical model as a function that produces a predicted score for each observation - Ch. 5, 7-9
-    - Differentiate between the empty model and a more complex model - Ch. 5, 7-9
-    - Identify the most appropriate model to use based on how variables are measured (e.g., group versus regression models) - Ch. 5,7-9
-    - Distinguish between a model of data and a model of DGP - Ch. 5-9
-    - Identify that the mean acts as a balancing point for (error) residuals in a distribution - Ch. 5
-    - Recognize that the best fitting model minimizes the appropriate measure of error (in this course, sum of squares; SS) - Ch. 6-9
-    - Understand the concept of “overfitting” a model - Ch. 8
+    <Cluster_1_Understand_data=model+error
+        - 1.1. Understand concept of statistical models: understanding models as predictions and moving from the empty model to more complex models
+        - 1.2. Understand concept of error: how error emerges between the model and the datapoint and how to conceptualize such error
+        - 1.3. Understand how transforming variables (standardizing) can help build models: using variables like z-scores and R values to figure out the strength of the relationship
+    </Cluster_1_Understand_data=model+error>
 
-    ## Cluster 2: Understand concept of error
-    - Visually intuit/ compare which models or distributions show more error - Ch. 5-9
-    - Define, calculate, and reason about residuals from models - Ch. 5-9
-    - Recognize that residuals aggregate to measures of error - Ch. 6-9
-    - Know that error from the empty model is all of the unexplained variation - Ch. 5-6
-    - Quantify aggregate error as Sum of Absolute Deviations (SAD), Sum of Squares (SS), variance, and standard deviation, and interpret these measures (R; e.g., supernova) - Ch. 6
-    - Recognize the pros and cons of different methods of quantifying error - Ch. 6
+    <Cluster_2_Fit_models>
+        - 2.1. Understand what it means to fit a model: calculating parameter estimates using the model, recognizing model fit depending on error reduced, and understanding model overfitting
+        - 2.2. Estimate parameters: differentiating between parameters and statistics and estimating parameters for empty and complex models
+</Cluster_2_Fit_models>
 
-    ## Cluster 3: Understand what error explains about the model
-    - Know that sum of squares from the empty model (SS total) can be partitioned into error and model sums of squares - Ch. 7-9
-    - Recognize that SS total is determined by the outcome variable and so total variation for an outcome variable will be the same regardless of explanatory variables included in the model - Ch. 7-9
-    - Interpret visual representations of SS error, SS model, and SS total from empty, group, and regression models - Ch. 7-9
-    - Use SS, PRE, and F statistic to compare models appropriately - Ch. 7-9
-    - Calculate (e.g., find ANOVA tables; R) and interpret PRE and F statistic (R) - Ch. 7-9
-    - Explain the concept of degrees of freedom - Ch. 8-9
+
+    <Cluster_3_Assess_model_fit>
+        - 3.1. Quantify aggregate error around a model: different methods of calculating error from residuals such as sum of squares, variance, or standard deviations and how such error is defined depending on if it is from empty or complex models.
+        - 3.2. Compare the fit of two models: use appropriate measures such as PRE and degrees of freedom to compare models
+    </Cluster_3_Assess_model_fit>
 </clusters>
 
 <task>
@@ -113,13 +103,15 @@
 
         output:
         {
-          "clarity": "Irrelevant",
-          "clarity_explanation": "The answer does not address the question.",
-          "concept_understanding": "Low",
-          "concept_understanding_explanation": "No concept is described.",
-          "reasoning_quality": "Low",
-          "reasoning_quality_explanation": "No reasoning is given.",
-          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+            "cluster": "Cluster_1_Understand_data=model+error",
+            "subconcept": "3.1.1",
+            "clarity": "Irrelevant",
+            "clarity_explanation": "The answer does not address the question.",
+            "concept_understanding": "Low",
+            "concept_understanding_explanation": "No concept is described.",
+            "reasoning_quality": "Low",
+            "reasoning_quality_explanation": "No reasoning is given.",
+            "transfer_explanation": "Irrelevant - the question was not a transfer question."
         }
     </example>
     <example>
@@ -130,13 +122,15 @@
 
         output:
         {
-          "clarity": "Low",
-          "clarity_explanation": "Student doesn’t distinguish between the empty model (grand mean) and the gender model.",
-          "concept_understanding": "Partial",
-          "concept_understanding_explanation": "Student must correctly indicate the sum of squares error is less than sum squares total for the gender model.",
-          "reasoning_quality": "High",
-          "reasoning_quality_explanation": "Student connects statistics like grand mean and gender mean to models.",
-          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+            "cluster": "Cluster_4_Assess_model_fit",
+            "subconcept": "3.4.3",
+            "clarity": "Low",
+            "clarity_explanation": "Student doesn’t distinguish between the empty model (grand mean) and the gender model.",
+            "concept_understanding": "Partial",
+            "concept_understanding_explanation": "Student must correctly indicate the sum of squares error is less than sum squares total for the gender model.",
+            "reasoning_quality": "High",
+            "reasoning_quality_explanation": "Student connects statistics like grand mean and gender mean to models.",
+            "transfer_explanation": "Irrelevant - the question was not a transfer question."
         }
     </example>
     <example>
@@ -147,13 +141,15 @@
 
         output:
         {
-          "clarity": "Low",
-          "clarity_explanation": "The word increase is ambiguous and could be incorrect depending on if the student means mean square model or mean square error.",
-          "concept_understanding": "Partial",
-          "concept_understanding_explanation": "Student confuses mean deviation with mean square.",
-          "reasoning_quality": "Low",
-          "reasoning_quality_explanation": "Student doesn’t explain why a smaller MS value leads to less elegant models, namely there are not enough data points in the sample for a 5 parameter categorical variable.",
-          "transfer_explanation": "Student shows transfer of procedural knowledge of model evaluation (mean square), but does not demonstrate transfer of principle (overfitting the data). Given the far transfer of knowledge domain, the student’s partial understanding is a good sign."
+            "cluster": "Cluster_3_Fit_models",
+            "subconcept": "3.3.1",
+            "clarity": "Low",
+            "clarity_explanation": "The word increase is ambiguous and could be incorrect depending on if the student means mean square model or mean square error.",
+            "concept_understanding": "Partial",
+            "concept_understanding_explanation": "Student confuses mean deviation with mean square.",
+            "reasoning_quality": "Low",
+            "reasoning_quality_explanation": "Student doesn’t explain why a smaller MS value leads to less elegant models, namely there are not enough data points in the sample for a 5 parameter categorical variable.",
+            "transfer_explanation": "Student shows transfer of procedural knowledge of model evaluation (mean square), but does not demonstrate transfer of principle (overfitting the data). Given the far transfer of knowledge domain, the student’s partial understanding is a good sign."
         }
     </example>
     <example>
@@ -164,13 +160,15 @@
 
         output:
         {
-          "clarity": "High",
-          "clarity_explanation": "Student uses precise, unambiguous language.",
-          "concept_understanding": "High",
-          "concept_understanding_explanation": "The student applies the concept of models in a profound way. Their response answers the entire question. The one limitation is that the student’s definition of models only applies to statistics.",
-          "reasoning_quality": "High",
-          "reasoning_quality_explanation": "The student clearly answers the question in their own words, indicating clear understanding.",
-          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+            "cluster": "Cluster_1_Understand_data=model+error",
+            "subconcept": "3.1.1",
+            "clarity": "High",
+            "clarity_explanation": "Student uses precise, unambiguous language.",
+            "concept_understanding": "High",
+            "concept_understanding_explanation": "The student applies the concept of models in a profound way. Their response answers the entire question. The one limitation is that the student’s definition of models only applies to statistics.",
+            "reasoning_quality": "High",
+            "reasoning_quality_explanation": "The student clearly answers the question in their own words, indicating clear understanding.",
+            "transfer_explanation": "Irrelevant - the question was not a transfer question."
         }
     </example>
     <example>
@@ -181,13 +179,15 @@
 
         output:
         {
-          "clarity": "High",
-          "clarity_explanation": "Student uses precise, unambiguous language.",
-          "concept_understanding": "Low",
-          "concept_understanding_explanation": "The student incorrectly applies the concept of models to the transfer problem. The model is whether the animal flies, the data is the objects you wish to classify, and error is the extraneous characteristics that help classify birds (like feathers).",
-          "reasoning_quality": "Medium",
-          "reasoning_quality_explanation": "The student does not attempt to explain their thought process behind their answer.",
-          "transfer_explanation": "No demonstrated far transfer of underlying principle."
+            "cluster": "Cluster_1_Understand_data=model+error",
+            "subconcept": "3.1.1",
+            "clarity": "High",
+            "clarity_explanation": "Student uses precise, unambiguous language.",
+            "concept_understanding": "Low",
+            "concept_understanding_explanation": "The student incorrectly applies the concept of models to the transfer problem. The model is whether the animal flies, the data is the objects you wish to classify, and error is the extraneous characteristics that help classify birds (like feathers).",
+            "reasoning_quality": "Medium",
+            "reasoning_quality_explanation": "The student does not attempt to explain their thought process behind their answer.",
+            "transfer_explanation": "No demonstrated far transfer of underlying principle."
         }
     </example>
     <example>
@@ -198,13 +198,32 @@
 
         output:
         {
-          "clarity": "Typo",
-          "clarity_explanation": "The answer cuts off mid-sentence, suggesting it was submitted accidentally before the student finished typing.",
-          "concept_understanding": "Low",
-          "concept_understanding_explanation": "Too incomplete to judge understanding.",
-          "reasoning_quality": "Low",
-          "reasoning_quality_explanation": "No reasoning is given.",
-          "transfer_explanation": "Irrelevant - the question was not a transfer question."
+            "cluster": "Cluster_1_Understand_data=model+error",
+            "subconcept": "3.1.1",
+            "clarity": "Typo",
+            "clarity_explanation": "The answer cuts off mid-sentence, suggesting it was submitted accidentally before the student finished typing.",
+            "concept_understanding": "Low",
+            "concept_understanding_explanation": "Too incomplete to judge understanding.",
+            "reasoning_quality": "Low",
+            "reasoning_quality_explanation": "No reasoning is given.",
+            "transfer_explanation": "Irrelevant - the question was not a transfer question."
         }
     </example>
+    <example>
+        input: 
+        ## Question: "Suppose two students have exam scores of 95 and 55, while the class average is 75. What would you calculate as the residual for each of these students, and what does that residual actually represent about that student?"
+
+        ## Answer: The residual for each student is +20 and -20 respectively. The residual represents the amount of other stuff besides the mean that predicts their score
+
+       output:
+        {
+            "clarity": "High",
+            "clarity_explanation": "The residual values (+20 and -20) are correctly calculated and clearly stated. The phrase 'other stuff besides the mean' is taken from the textbook and applied coherently.",
+            "concept_understanding": "High",
+            "concept_understanding_explanation": "Student correctly calculates residuals as DATA - MODEL, showing procedural understanding. Additionally, the explanation of what the residual represents is precise; 'other stuff' suggests a grasp of the residual as unexplained error/variation left over after accounting for the model's prediction.",
+            "reasoning_quality": “High”,
+            "reasoning_quality_explanation": "The student correctly computes the values and explains why the residual represents unexplained variation.",
+            "transfer_explanation": "Irrelevant - the question was not a transfer question."
+        }
+    </example>
 </examples>

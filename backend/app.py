@@ -91,12 +91,11 @@ def render_rag_blocks(blocks: list[str]) -> str:
 def call_claude(messages, prompt, task=None, rag_context=None, output_schema=None):
     msgs = list(messages)
     task = f"\n\n<task>\n{task or ''}\n</task>"
+
+    system = [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}},
+              {"type": "text", "text": task}]
     if rag_context:
-        tag = f"\n\n<verified_context>\n{rag_context}\n</verified_context>"
-        if msgs and msgs[-1]["role"] == "user":
-            msgs[-1] = {**msgs[-1], "content": msgs[-1]["content"] + tag}
-        else:
-            msgs.append({"role": "user", "content": tag})
+        system.append({"type": "text", "text": f"\n\n<verified_context>\n{rag_context}\n</verified_context>"})
 
     # Only evaluator calls pass output_schema today — questioner/summarizer
     # calls leave it unset and get the same free-text behavior as before.
@@ -107,8 +106,7 @@ def call_claude(messages, prompt, task=None, rag_context=None, output_schema=Non
     response = client.messages.create(
         model="claude-sonnet-5",
         max_tokens=4096,
-        system=[{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}},
-                {"type": "text", "text": task}],
+        system=system,
         messages=msgs,
         **kwargs,
     )
@@ -123,9 +121,25 @@ def call_claude(messages, prompt, task=None, rag_context=None, output_schema=Non
 # Enforced by output_config.format on the evaluator call (see call_claude) —
 # these are the only values Claude can return for each field, so there's no
 # more regex parsing of free-text markdown headings.
+CLUSTERS = [
+    "Cluster_1_Understand_data=model+error",
+    "Cluster_2_Specify_models",
+    "Cluster_3_Fit_models",
+    "Cluster_4_Assess_model_fit",
+]
+
+SUBCONCEPTS = [
+    "3.1.1", "3.1.2", "3.1.3", "3.1.4",
+    "3.2.1", "3.2.2",
+    "3.3.1", "3.3.2", "3.3.3",
+    "3.4.1", "3.4.2", "3.4.3", "3.4.4",
+]
+
 EVALUATOR_SCHEMA = {
     "type": "object",
     "properties": {
+        "cluster": {"type": "string", "enum": CLUSTERS},
+        "subconcept": {"type": "string", "enum": SUBCONCEPTS},
         "clarity": {"type": "string", "enum": ["High", "Low", "Irrelevant", "Typo"]},
         "clarity_explanation": {"type": "string"},
         "concept_understanding": {"type": "string", "enum": ["High", "Partial", "Low"]},
@@ -135,6 +149,7 @@ EVALUATOR_SCHEMA = {
         "transfer_explanation": {"type": "string"},
     },
     "required": [
+        "cluster", "subconcept",
         "clarity", "clarity_explanation",
         "concept_understanding", "concept_understanding_explanation",
         "reasoning_quality", "reasoning_quality_explanation",
@@ -146,9 +161,14 @@ EVALUATOR_SCHEMA = {
 
 def format_evaluation(parsed: dict) -> str:
     # Re-render the evaluator's structured output as the markdown shape the
-    # questioner's own few-shot examples expect (see questioner_prompt.txt),
-    # so questioner_prompt.txt doesn't need to change.
+    # questioner's own few-shot examples expect (see questioner_prompt.txt).
+    # Cluster/Subconcept are here so the questioner can read, from its own
+    # conversation history, which clusters/subconcepts have already been
+    # probed and at what level — that's the whole coverage-tracking channel,
+    # no separate state machine needed.
     return (
+        f"### Cluster\n{parsed['cluster']}\n"
+        f"### Subconcept\n{parsed['subconcept']}\n"
         f"### Clarity\n{parsed['clarity']} - {parsed['clarity_explanation']}\n"
         f"### Concept Understanding\n{parsed['concept_understanding']} - {parsed['concept_understanding_explanation']}\n"
         f"### Reasoning Quality\n{parsed['reasoning_quality']} - {parsed['reasoning_quality_explanation']}\n"
@@ -213,6 +233,8 @@ def get_string():
     )
     parsed_evaluation = json.loads(claude_evaluation)
     session.setdefault("rubric_scores", []).append({
+        "cluster": parsed_evaluation["cluster"],
+        "subconcept": parsed_evaluation["subconcept"],
         "clarity": parsed_evaluation["clarity"],
         "concept_understanding": parsed_evaluation["concept_understanding"],
         "reasoning_quality": parsed_evaluation["reasoning_quality"],
@@ -223,7 +245,7 @@ def get_string():
         "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + format_evaluation(parsed_evaluation),
     })
 
-    task = "1. Gauge the student's understanding of data = model + error by questioning the student along the following lines:\n"
+    task = ""
 
     # [concept, clarity, reason] counters carried over from the previous turn —
     # loaded from the session so progress toward a transition survives across
@@ -231,7 +253,7 @@ def get_string():
     concept, clarity, reason = session.get("progress", [0, 0, 0])
 
     if concept == 2 or clarity == 2 or reason == 2:
-        task += "- Naturally transition to the next concept to test student's understanding on with <clusters>."
+        task += "- Naturally transition to a new subconcept from " + parsed_evaluation["subconcept"] + "OR a new cluster from " + parsed_evaluation["cluster"] + " using <clusters>."
         concept = clarity = reason = 0
     elif session["rubric_scores"][-1].get("clarity") == "Typo":
         task = "- Mention to the student you think they made a typo and give them chance to correct it.\n- Restate the previous question exactly as it was asked.\n- Do not treat this as a clarity, concept, or reasoning issue."
@@ -285,6 +307,9 @@ def get_string():
         # Pool every turn's retrieved blocks and dedupe across the whole
         # session — consecutive turns on the same concept otherwise retrieve
         # a lot of the same chunks, and joining them raw just repeats them.
+        # This is supplementary grounding only — the actual evidence the
+        # summarizer grades against is session["messages"], where each turn
+        # now carries its own ### Cluster / ### Subconcept tag.
         seen = set()
         unique_blocks = []
         for turn_blocks in session["rag_contexts"]:
@@ -295,7 +320,10 @@ def get_string():
                     seen.add(block)
                     unique_blocks.append(block)
         all_rag = render_rag_blocks(unique_blocks)
-        claude_summary = call_claude(session["messages"], summarizer_prompt, rag_context=all_rag)
+        # Exclude the just-appended, not-yet-answered next question — Sonnet 5
+        # rejects a request whose conversation ends on an assistant turn
+        # ("assistant message prefill" 400).
+        claude_summary = call_claude(session["messages"][:-1], summarizer_prompt, rag_context=all_rag)
         session["evaluation_summary"] = claude_summary
 
     save_sessions()
