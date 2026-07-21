@@ -90,10 +90,10 @@ def render_rag_blocks(blocks: list[str]) -> str:
 
 def call_claude(messages, prompt, task=None, rag_context=None, output_schema=None):
     msgs = list(messages)
-    task = f"\n\n<task>\n{task or ''}\n</task>"
 
-    system = [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}},
-              {"type": "text", "text": task}]
+    system = [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}]
+    if task:
+        system.append({"type": "text", "text": f"\n\n<task>\n{task}\n</task>"})
     if rag_context:
         system.append({"type": "text", "text": f"\n\n<verified_context>\n{rag_context}\n</verified_context>"})
 
@@ -123,9 +123,8 @@ def call_claude(messages, prompt, task=None, rag_context=None, output_schema=Non
 # more regex parsing of free-text markdown headings.
 CLUSTERS = [
     "Cluster_1_Understand_data=model+error",
-    "Cluster_2_Specify_models",
-    "Cluster_3_Fit_models",
-    "Cluster_4_Assess_model_fit",
+    "Cluster_2_Fit_models",
+    "Cluster_3_Assess_model_fit",
 ]
 
 SUBCONCEPTS = [
@@ -139,11 +138,11 @@ EVALUATOR_SCHEMA = {
     "properties": {
         "cluster": {"type": "string", "enum": CLUSTERS},
         "subconcept": {"type": "string", "enum": SUBCONCEPTS},
-        "clarity": {"type": "string", "enum": ["High", "Low", "Irrelevant", "Typo"]},
+        "clarity": {"type": "string", "enum": ["High", "Low", "Irrelevant", "Incomplete"]},
         "clarity_explanation": {"type": "string"},
         "concept_understanding": {"type": "string", "enum": ["High", "Partial", "Low"]},
         "concept_understanding_explanation": {"type": "string"},
-        "reasoning_quality": {"type": "string", "enum": ["High", "Medium", "Low"]},
+        "reasoning_quality": {"type": "string", "enum": ["High", "Medium", "Low", "Irrelevant"]},
         "reasoning_quality_explanation": {"type": "string"},
         "transfer_explanation": {"type": "string"},
     },
@@ -251,11 +250,25 @@ def get_string():
     # requests instead of resetting to 0 every time.
     concept, clarity, reason = session.get("progress", [0, 0, 0])
 
+    # Transitioning to a new subconcept/cluster means the RAG lookup below
+    # (grounded in the student's answer to the OLD subconcept) is about to
+    # become irrelevant at best, misleading at worst, for the question the
+    # questioner is about to ask. <clusters> already carries the target
+    # subconcept's description, so drop the stale context here rather than
+    # pass it to the questioner call.
+    transitioning = concept == 2 or clarity == 2 or reason == 2
+
     if concept == 2 or clarity == 2 or reason == 2:
-        task += "- Naturally transition to a new subconcept from " + parsed_evaluation["subconcept"] + " OR a new cluster from " + parsed_evaluation["cluster"] + " using <clusters>."
+        task += (
+            "- The student has just been tested on subconcept " + parsed_evaluation["subconcept"]
+            + " within " + parsed_evaluation["cluster"] + ". Naturally transition to a different,"
+            + " not-yet-covered subconcept in that cluster, or to a new cluster entirely, using"
+            + " <clusters> and the ### Cluster / ### Subconcept tags already in the conversation"
+            + " to see what has been covered."
+        )
         concept = clarity = reason = 0
-    elif session["rubric_scores"][-1].get("clarity") == "Typo":
-        task = "- Mention to the student you think they made a typo and give them chance to correct it.\n- Restate the previous question exactly as it was asked.\n- Do not treat this as a clarity, concept, or reasoning issue."
+    elif session["rubric_scores"][-1].get("clarity") == "Incomplete":
+        task = "- Mention to the student you think their response is incomplete and give them chance to correct it.\n- Restate the previous question exactly as it was asked.\n- Do not treat this as a clarity, concept, or reasoning issue."
         concept = clarity = reason = 0
     elif session["rubric_scores"][-1].get("clarity") == "Low":
         task += "- Rephrase the question by indicating the element that needs clarification.\n- Target the ambiguity of the user's input."
@@ -293,7 +306,7 @@ def get_string():
 
     print(task)
 
-    next_question = call_claude(session["messages"], questioner_prompt, task=task, rag_context=rag_context)
+    next_question = call_claude(session["messages"], questioner_prompt, task=task, rag_context=None if transitioning else rag_context,)
 
     session["messages"].append({"role": "assistant", "content": next_question})
     session["current_question"] = next_question

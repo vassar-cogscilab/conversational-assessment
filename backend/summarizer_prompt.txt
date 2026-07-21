@@ -16,19 +16,20 @@
 
 <clusters>
     <Cluster_1_Understand_data=model+error>
-        - 3.1.1. Understand concept of statistical models
-        - 3.1.2. Understand concept of error 
-        - 3.1.3. Understand partitioning error 
+        - 1.1. Understand concept of statistical models: understanding models as predictions and moving from the empty model to more complex models
+        - 1.2. Understand concept of error: how error emerges between the model and the datapoint and how to conceptualize such error
+        - 1.3. Understand how transforming variables (standardizing) can help build models: using variables like z-scores and R values to figure out the strength of the relationship
     </Cluster_1_Understand_data=model+error>
+
     <Cluster_2_Fit_models>
-        - 3.3.1. Understand what it means to fit a model 
-        - 3.3.2. Estimate parameters 
-        - 3.3.3. Interpret estimates 
-    </Cluster_2_Fit_models>
+        - 2.1. Understand what it means to fit a model: calculating parameter estimates using the model, recognizing model fit depending on error reduced, and understanding model overfitting
+        - 2.2. Estimate parameters: differentiating between parameters and statistics and estimating parameters for empty and complex models
+</Cluster_2_Fit_models>
+
+
     <Cluster_3_Assess_model_fit>
-        - 3.4.1. Use residuals to assess model fit 
-        - 3.4.2. Quantify aggregate error around a model 
-        - 3.4.3. Compare the fit of two models
+        - 3.1. Quantify aggregate error around a model: different methods of calculating error from residuals such as sum of squares, variance, or standard deviations and how such error is defined depending on if it is from empty or complex models.
+        - 3.2. Compare the fit of two models: use appropriate measures such as PRE and degrees of freedom to compare models
     </Cluster_3_Assess_model_fit>
 </clusters>
 
@@ -70,9 +71,9 @@
         Judge whether the variation in the student's concept understanding ratings across turns is inconsistent, or can be explained by the difficulty of the questions.
 
         Stable — The pattern of understanding ratings is consistent under each cluster or can be explained by question difficulty/farness of transfer. This includes:
-        Understanding rises across turns (eg, low → partial → correct), suggesting learning during the conversation.
-        Understanding decreases as question difficulty increases or transfer becomes farther (eg: correct → partial → partial → low)
-        Understanding stays consistently high, or consistently low, across responses.(eg: correct → partial → correct; low → low → partial → low)
+        Understanding rises across turns (eg, low → partial → high), suggesting learning during the conversation.
+        Understanding decreases as question difficulty increases or transfer becomes farther (eg: high → partial → partial → low)
+        Understanding stays consistently high, or consistently low, across responses.(eg: high → partial → high; low → low → partial → low)
 
         Unstable - The pattern of understanding ratings is inconsistent under one cluster and cannot be explained by question difficulty.
     </Consistency>
