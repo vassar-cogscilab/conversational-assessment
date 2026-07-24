@@ -17,14 +17,8 @@ client = anthropic.Anthropic()
 
 BASE_DIR = Path(__file__).resolve().parent
 
-with open(BASE_DIR / "questioner_prompt.txt", encoding="utf-8") as f:
-    questioner_prompt = f.read()
-
-with open(BASE_DIR / "evaluator_prompt.txt", encoding="utf-8") as f:
-    evaluator_prompt = f.read()
-
-with open(BASE_DIR / "summarizer_prompt.txt", encoding="utf-8") as f:
-    summarizer_prompt = f.read()
+with open(BASE_DIR / "examiner_prompt.txt", encoding="utf-8") as f:
+    examiner_prompt = f.read()
 
 sys.path.insert(0, str(BASE_DIR / "RAG_5-9"))
 from database_engine import ContextualVectorDB
@@ -35,7 +29,7 @@ rag_db.load_db()
 
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
-# Session store: session_id -> {messages, turns, current_question, rag_contexts, evaluation_summary}.
+# Session store: session_id -> {messages, turns, current_question, rag_contexts, turn_log, evaluation_summary}.
 # Persisted to SESSIONS_FILE after every mutation and reloaded at startup, so a
 # restart doesn't lose history — this also doubles as the data source for the
 # /admin/sessions endpoints below. Requires a single gunicorn worker: each
@@ -88,24 +82,26 @@ def render_rag_blocks(blocks: list[str]) -> str:
     return "\n".join(f"--- Context Segment ---\n{block}\n" for block in blocks)
 
 
-def call_claude(messages, prompt, task=None, rag_context=None, output_schema=None):
+def call_claude(messages, prompt, rag_context=None, output_schema=None):
     msgs = list(messages)
 
     system = [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}]
-    if task:
-        system.append({"type": "text", "text": f"\n\n<task>\n{task}\n</task>"})
     if rag_context:
         system.append({"type": "text", "text": f"\n\n<verified_context>\n{rag_context}\n</verified_context>"})
 
-    # Only evaluator calls pass output_schema today — questioner/summarizer
-    # calls leave it unset and get the same free-text behavior as before.
     kwargs = {}
     if output_schema:
         kwargs["output_config"] = {"format": {"type": "json_schema", "schema": output_schema}}
 
+    # display: "summarized" is required to get readable text back on Sonnet 5 —
+    # thinking runs adaptively either way, but the .thinking field is empty
+    # under the default "omitted" display. This is the source of truth for
+    # the examiner's admin-visible reasoning trail (see turn_log in /string),
+    # rather than asking the model to restate its reasoning in a schema field.
     response = client.messages.create(
         model="claude-sonnet-5",
         max_tokens=4096,
+        thinking={"type": "adaptive", "display": "summarized"},
         system=system,
         messages=msgs,
         **kwargs,
@@ -115,63 +111,51 @@ def call_claude(messages, prompt, task=None, rag_context=None, output_schema=Non
             "Claude response was truncated (hit max_tokens) before finishing — "
             "increase max_tokens in call_claude."
         )
-    return next(block.text for block in response.content if block.type == "text")
+    text = next(block.text for block in response.content if block.type == "text")
+    thinking = next((block.thinking for block in response.content if block.type == "thinking"), "")
+    return text, thinking
 
 
-# Enforced by output_config.format on the evaluator call (see call_claude) —
-# these are the only values Claude can return for each field, so there's no
-# more regex parsing of free-text markdown headings.
-CLUSTERS = [
-    "Cluster_1_Understand_data=model+error",
-    "Cluster_2_Fit_models",
-    "Cluster_3_Assess_model_fit",
-]
+# Enforced by output_config.format on the examiner call (see call_claude) —
+# fields mirror exactly what examiner_prompt.txt's own <conversation_examples>
+# already produce as prose (Belief / Conversation state / Understanding of the
+# mean as a model / Question), plus per-turn admin-visible bookkeeping
+# (target_concept, target_misconceptions) grounded in the prompt's own
+# <Understand_the_mean_as_a_model> and <misconceptions> sections. There is no
+# "reasoning" field here — that's sourced from the model's actual adaptive
+# thinking output (see call_claude), not a self-reported schema field.
+MAX_TURNS = 12
 
-SUBCONCEPTS = [
-    "1.1", "1.2", "1.3",
-    "2.1", "2.2",
-    "3.1", "3.2",
-]
-
-EVALUATOR_SCHEMA = {
+EXAMINER_SCHEMA = {
     "type": "object",
     "properties": {
-        "cluster": {"type": "string", "enum": CLUSTERS},
-        "subconcept": {"type": "string", "enum": SUBCONCEPTS},
-        "clarity": {"type": "string", "enum": ["High", "Low", "Irrelevant", "Incomplete"]},
-        "clarity_explanation": {"type": "string"},
-        "concept_understanding": {"type": "string", "enum": ["High", "Partial", "Low"]},
-        "concept_understanding_explanation": {"type": "string"},
-        "reasoning_quality": {"type": "string", "enum": ["High", "Medium", "Low", "Irrelevant"]},
-        "reasoning_quality_explanation": {"type": "string"},
-        "transfer_explanation": {"type": "string"},
+        "target_concept": {"type": "string", "enum": ["1", "2", "3", "4"]},
+        "target_misconceptions": {"type": "array", "items": {"type": "string"}},
+        "belief": {"type": "string"},
+        "conversation_state": {"type": "string", "enum": ["ongoing", "finished"]},
+        "understanding_of_mean_as_model": {"type": "string", "enum": ["Pending", "Poor", "High"]},
+        "question": {"type": "string"},
     },
     "required": [
-        "cluster", "subconcept",
-        "clarity", "clarity_explanation",
-        "concept_understanding", "concept_understanding_explanation",
-        "reasoning_quality", "reasoning_quality_explanation",
-        "transfer_explanation",
+        "target_concept", "target_misconceptions", "belief",
+        "conversation_state", "understanding_of_mean_as_model", "question",
     ],
     "additionalProperties": False,
 }
 
 
-def format_evaluation(parsed: dict) -> str:
-    # Re-render the evaluator's structured output as the markdown shape the
-    # questioner's own few-shot examples expect (see questioner_prompt.txt).
-    # Cluster/Subconcept are here so the questioner can read, from its own
-    # conversation history, which clusters/subconcepts have already been
-    # probed and at what level — that's the whole coverage-tracking channel,
-    # no separate state machine needed.
-    return (
-        f"### Cluster\n{parsed['cluster']}\n"
-        f"### Subconcept\n{parsed['subconcept']}\n"
-        f"### Clarity\n{parsed['clarity']} - {parsed['clarity_explanation']}\n"
-        f"### Concept Understanding\n{parsed['concept_understanding']} - {parsed['concept_understanding_explanation']}\n"
-        f"### Reasoning Quality\n{parsed['reasoning_quality']} - {parsed['reasoning_quality_explanation']}\n"
-        f"### Transfer\n{parsed['transfer_explanation']}"
-    )
+def format_examiner_turn(parsed: dict) -> str:
+    # Re-render the structured output as the plain-text shape examiner_prompt.txt's
+    # own <conversation_examples> use, so each turn keeps pattern-matching against
+    # its own few-shot history. reasoning/target_concept/target_misconceptions are
+    # deliberately left out of what gets replayed — they're admin-only bookkeeping
+    # (see turn_log in /string), not part of the few-shot pattern.
+    lines = [f"Belief: {parsed['belief']}"]
+    if parsed["conversation_state"] == "finished":
+        lines.append("Conversation state: finished")
+        lines.append(f"Understanding of the mean as a model: {parsed['understanding_of_mean_as_model']}")
+    lines.append(f"Question: {parsed['question']}")
+    return "\n".join(lines)
 
 
 @app.get("/")
@@ -199,8 +183,7 @@ def new_chat():
         "turns": 0,
         "current_question": INITIAL_MESSAGE,
         "rag_contexts": [],
-        "rubric_scores": [],
-        "progress": [0, 0, 0],  # [concept, clarity, reason] counters, see get_string()
+        "turn_log": [],
     }
     save_sessions()
     return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
@@ -216,131 +199,39 @@ def get_string():
         return jsonify(error="session_not_found"), 404
 
     session = sessions[session_id]
-    current_question = session["current_question"]
 
     rag_blocks = get_rag_context(user_input)
     session["rag_contexts"].append(rag_blocks)
     rag_context = render_rag_blocks(rag_blocks)
 
-    eval_messages = [
-        {"role": "assistant", "content": "## Question: " + current_question},
-        {"role": "user", "content": "## Answer: " + user_input},
-    ]
-    claude_evaluation = call_claude(
-        eval_messages, evaluator_prompt, rag_context=rag_context, output_schema=EVALUATOR_SCHEMA
+    session["messages"].append({"role": "user", "content": user_input})
+
+    claude_response, thinking = call_claude(
+        session["messages"], examiner_prompt, rag_context=rag_context, output_schema=EXAMINER_SCHEMA
     )
-    parsed_evaluation = json.loads(claude_evaluation)
-    session.setdefault("rubric_scores", []).append({
-        "cluster": parsed_evaluation["cluster"],
-        "subconcept": parsed_evaluation["subconcept"],
-        "clarity": parsed_evaluation["clarity"],
-        "concept_understanding": parsed_evaluation["concept_understanding"],
-        "reasoning_quality": parsed_evaluation["reasoning_quality"],
+    parsed = json.loads(claude_response)
+
+    session.setdefault("turn_log", []).append({
+        "reasoning": thinking,
+        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "belief")},
     })
 
-    session["messages"].append({
-        "role": "user",
-        "content": "## User Input\n" + user_input + "\n## Input Assessment\n" + format_evaluation(parsed_evaluation),
-    })
-
-    task = ""
-
-    # [concept, clarity, reason] counters carried over from the previous turn —
-    # loaded from the session so progress toward a transition survives across
-    # requests instead of resetting to 0 every time.
-    concept, clarity, reason = session.get("progress", [0, 0, 0])
-
-    # Transitioning to a new subconcept/cluster means the RAG lookup below
-    # (grounded in the student's answer to the OLD subconcept) is about to
-    # become irrelevant at best, misleading at worst, for the question the
-    # questioner is about to ask. <clusters> already carries the target
-    # subconcept's description, so drop the stale context here rather than
-    # pass it to the questioner call.
-    transitioning = concept == 2 or clarity == 2 or reason == 2
-
-    if concept == 2 or clarity == 2 or reason == 2:
-        task += (
-            "- The student has just been tested on subconcept " + parsed_evaluation["subconcept"]
-            + " within " + parsed_evaluation["cluster"] + ". Naturally transition to a different,"
-            + " not-yet-covered subconcept in that cluster, or to a new cluster entirely, using"
-            + " <clusters> and the ### Cluster / ### Subconcept tags already in the conversation"
-            + " to see what has been covered."
-        )
-        concept = clarity = reason = 0
-    elif session["rubric_scores"][-1].get("clarity") == "Incomplete":
-        task = "- Mention to the student you think their response is incomplete and give them chance to correct it.\n- Restate the previous question exactly as it was asked.\n- Do not treat this as a clarity, concept, or reasoning issue."
-        concept = clarity = reason = 0
-    elif session["rubric_scores"][-1].get("clarity") == "Low":
-        task += "- Rephrase the question by indicating the element that needs clarification.\n- Target the ambiguity of the user's input."
-        clarity += 1
-    elif session["rubric_scores"][-1].get("clarity") == "Irrelevant":
-        task += "- Rephrase the question using different, familiar examples."
-        clarity += 1
-    elif session["rubric_scores"][-1].get("concept_understanding") == "Low":
-        task += "- Rephrase the previous question with simpler, more familiar terms.\n- Probe for any confusion of concepts\n- Do not prompt the right answer."
-        concept += 1
-        clarity = 0
-    elif session["rubric_scores"][-1].get("reasoning_quality") == "Low":
-        task += "- Ask student to explain their reasoning with a question that probes their faulty logic.\n-Do not prompt the right answer."
-        reason += 1
-        clarity = 0
-    elif session["rubric_scores"][-1].get("concept_understanding") == "High":
-        if session["rubric_scores"][-1].get("reasoning_quality") == "High":
-            concept = 2
-            clarity = 0
-            task += "- ask a far context knowledge transfer question using <ask_knowledge_transfer_questions>."
-        elif session["rubric_scores"][-1].get("reasoning_quality") == "Medium":
-            concept = 2
-            clarity = 0
-            task += "- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
-        else:
-            task += "- ask a nearer transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
-    elif session["rubric_scores"][-1].get("concept_understanding") == "Partial":
-        concept = 2
-        clarity = 0
-        task += "- ask a nearer principle transfer question surrounding the concept using <ask_knowledge_transfer_questions>."
-    else:
-        task += "- ask a nearer, principle transfer question using <ask_knowledge_transfer_questions>."
-
-    session["progress"] = [concept, clarity, reason]
-
-    print(task)
-
-    next_question = call_claude(session["messages"], questioner_prompt, task=task, rag_context=None if transitioning else rag_context,)
-
-    session["messages"].append({"role": "assistant", "content": next_question})
-    session["current_question"] = next_question
+    session["messages"].append({"role": "assistant", "content": format_examiner_turn(parsed)})
+    session["current_question"] = parsed["question"]
     session["turns"] += 1
-    print(session["turns"])
 
-    claude_summary = None
+    finished = parsed["conversation_state"] == "finished" or session["turns"] >= MAX_TURNS
 
-    if session["turns"] == 10:
-        # Pool every turn's retrieved blocks and dedupe across the whole
-        # session — consecutive turns on the same concept otherwise retrieve
-        # a lot of the same chunks, and joining them raw just repeats them.
-        # This is supplementary grounding only — the actual evidence the
-        # summarizer grades against is session["messages"], where each turn
-        # now carries its own ### Cluster / ### Subconcept tag.
-        seen = set()
-        unique_blocks = []
-        for turn_blocks in session["rag_contexts"]:
-            if isinstance(turn_blocks, str):  # legacy sessions predate this format
-                turn_blocks = [turn_blocks]
-            for block in turn_blocks:
-                if block not in seen:
-                    seen.add(block)
-                    unique_blocks.append(block)
-        all_rag = render_rag_blocks(unique_blocks)
-        # Exclude the just-appended, not-yet-answered next question — Sonnet 5
-        # rejects a request whose conversation ends on an assistant turn
-        # ("assistant message prefill" 400).
-        claude_summary = call_claude(session["messages"][:-1], summarizer_prompt, rag_context=all_rag)
-        session["evaluation_summary"] = claude_summary
+    if finished and "evaluation_summary" not in session:
+        understanding = parsed["understanding_of_mean_as_model"]
+        session["evaluation_summary"] = (
+            understanding if understanding in ("Poor", "High")
+            else "Understanding not determined — conversation ended at the turn limit."
+        )
 
     save_sessions()
 
-    return jsonify(server_message=next_question, evaluation_summary=claude_summary)
+    return jsonify(server_message=parsed["question"], evaluation_summary=session.get("evaluation_summary"))
 
 
 def require_admin():

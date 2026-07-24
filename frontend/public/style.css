@@ -14,19 +14,6 @@ body {
 :root {
   --primary-color: #1b0059;
   --primary-dark: #120038;
-  --secondary-color: #08cadc;
-  --secondary-dark: #018692;
-  --tertiary-color: #ff7896;
-  --tertiary-dark: #a94157;
-  --accent-color: #08cadc;
-  --background-color: #ffffff;
-  --background-dark: #1b00590f;
-  --text-color: #ffffff;
-  --text-color-alt: #000000;
-
-
-  --primary-color: #1b0059;
-  --primary-dark: #120038;
   --secondary-color: #1b0059;
   --secondary-dark: #7353b3;
   --tertiary-color: #cbcbcb;
@@ -46,6 +33,18 @@ body {
   --accent-color: #a57bd0;;
   --background-color: #ffffff;
   --background-dark: #f1f1f1;
+  --text-color: #ffffff;
+  --text-color-alt: #000000;
+
+  --primary-color: #1b0059;
+  --primary-dark: #120038;
+  --secondary-color: #08cadc;
+  --secondary-dark: #018692;
+  --tertiary-color: #ff7896;
+  --tertiary-dark: #a94157;
+  --accent-color: #08cadc;
+  --background-color: #ffffff;
+  --background-dark: #1b00590f;
   --text-color: #ffffff;
   --text-color-alt: #000000;
 }
