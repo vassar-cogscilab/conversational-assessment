@@ -120,10 +120,14 @@ def call_claude(messages, prompt, rag_context=None, output_schema=None):
 # fields mirror exactly what examiner_prompt.txt's own <conversation_examples>
 # already produce as prose (Belief / Conversation state / Understanding of the
 # mean as a model / Question), plus per-turn admin-visible bookkeeping
-# (target_concept, target_misconceptions) grounded in the prompt's own
-# <Understand_the_mean_as_a_model> and <misconceptions> sections. There is no
-# "reasoning" field here — that's sourced from the model's actual adaptive
-# thinking output (see call_claude), not a self-reported schema field.
+# (target_concept, target_misconceptions, explanation) grounded in the
+# prompt's own <Understand_the_mean_as_a_model> and <misconceptions>
+# sections. There is no "reasoning" field here — that's sourced from the
+# model's actual adaptive thinking output (see call_claude), not a
+# self-reported schema field. "explanation" is separate from "reasoning": it's
+# the model's stated justification for `belief` (comparison to the ideal
+# response, misconceptions per <task> step 3), kept out of `belief` itself so
+# `belief` can stay the terse cumulative status line the examples show.
 MAX_TURNS = 12
 
 EXAMINER_SCHEMA = {
@@ -132,12 +136,13 @@ EXAMINER_SCHEMA = {
         "target_concept": {"type": "string", "enum": ["1", "2", "3", "4"]},
         "target_misconceptions": {"type": "array", "items": {"type": "string"}},
         "belief": {"type": "string"},
+        "explanation": {"type": "string"},
         "conversation_state": {"type": "string", "enum": ["ongoing", "finished"]},
         "understanding_of_mean_as_model": {"type": "string", "enum": ["Pending", "Poor", "High"]},
         "question": {"type": "string"},
     },
     "required": [
-        "target_concept", "target_misconceptions", "belief",
+        "target_concept", "target_misconceptions", "belief", "explanation",
         "conversation_state", "understanding_of_mean_as_model", "question",
     ],
     "additionalProperties": False,
@@ -147,9 +152,10 @@ EXAMINER_SCHEMA = {
 def format_examiner_turn(parsed: dict) -> str:
     # Re-render the structured output as the plain-text shape examiner_prompt.txt's
     # own <conversation_examples> use, so each turn keeps pattern-matching against
-    # its own few-shot history. reasoning/target_concept/target_misconceptions are
-    # deliberately left out of what gets replayed — they're admin-only bookkeeping
-    # (see turn_log in /string), not part of the few-shot pattern.
+    # its own few-shot history. reasoning/target_concept/target_misconceptions/
+    # explanation are deliberately left out of what gets replayed — they're
+    # admin-only bookkeeping (see turn_log in /string), not part of the few-shot
+    # pattern, and keeping them out is what lets `belief` stay terse.
     lines = [f"Belief: {parsed['belief']}"]
     if parsed["conversation_state"] == "finished":
         lines.append("Conversation state: finished")
@@ -213,7 +219,7 @@ def get_string():
 
     session.setdefault("turn_log", []).append({
         "reasoning": thinking,
-        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "belief")},
+        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "belief", "explanation")},
     })
 
     session["messages"].append({"role": "assistant", "content": format_examiner_turn(parsed)})
