@@ -77,11 +77,25 @@ def render_rag_blocks(blocks: list[str]) -> str:
 
 
 def call_claude(messages, prompt, rag_context=None, output_schema=None):
-    msgs = list(messages)
+    msgs = [dict(m) for m in messages]
 
     system = [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}]
+
+    # Cache everything through the prior turn so each call only pays to process
+    # the newest message, instead of re-processing the whole growing transcript
+    # uncached every time. The breakpoint has to sit before wherever rag_context
+    # gets injected below — a block that changes every turn would otherwise
+    # invalidate any cache breakpoint that comes after it.
+    if len(msgs) >= 2:
+        prior = msgs[-2]
+        msgs[-2] = {
+            **prior,
+            "content": [{"type": "text", "text": prior["content"], "cache_control": {"type": "ephemeral"}}],
+        }
+
     if rag_context:
-        system.append({"type": "text", "text": f"\n\n<verified_context>\n{rag_context}\n</verified_context>"})
+        latest = msgs[-1]
+        msgs[-1] = {**latest, "content": f"<verified_context>\n{rag_context}\n</verified_context>\n\n{latest['content']}"}
 
     kwargs = {}
     if output_schema:
