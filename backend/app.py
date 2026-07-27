@@ -101,11 +101,7 @@ def call_claude(messages, prompt, rag_context=None, output_schema=None):
     if output_schema:
         kwargs["output_config"] = {"format": {"type": "json_schema", "schema": output_schema}}
 
-    # display: "summarized" is required to get readable text back on Sonnet 5 —
-    # thinking runs adaptively either way, but the .thinking field is empty
-    # under the default "omitted" display. This is the source of truth for
-    # the examiner's admin-visible reasoning trail (see turn_log in /string),
-    # rather than asking the model to restate its reasoning in a schema field.
+
     response = client.messages.create(
         model="claude-sonnet-5",
         max_tokens=4096,
