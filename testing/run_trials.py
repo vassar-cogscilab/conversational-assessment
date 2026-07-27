@@ -6,14 +6,20 @@ understanding level the examiner concluded for each trial: High,
 Poor, or Undetermined (conversation hit the turn limit without the
 examiner committing to Poor or High).
 
-Mirrors backend/app.py's call shape (model, thinking config, RAG
-lookup, structured output schema, turn-limit logic) so results reflect
-what the deployed examiner would actually do.
+Shares backend/llm.py with the live backend, so the model call, thinking
+config, and structured-output handling are the same code the deployed
+examiner runs; RAG lookup, schema, and turn-limit logic are mirrored here.
+
+The examiner and the student are selected independently, which is how you
+A/B a backend: swap --examiner-backend and leave the student on Anthropic,
+so a change in the reported numbers is attributable to the examiner rather
+than to both sides of the conversation moving at once.
 
 Usage:
     python run_trials.py --trials 5
-    python run_trials.py --trials 3 --personas poor_brief
+    python run_trials.py --trials 3 --personas ccode_poor_brief
     python run_trials.py --trials 3 --workers 6 --out results.json
+    python run_trials.py --trials 5 --examiner-backend ollama --out ollama_results.json
 """
 import argparse
 import json
@@ -23,7 +29,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from dotenv import load_dotenv
-import anthropic
 
 TESTING_DIR = Path(__file__).resolve().parent
 ROOT_DIR = TESTING_DIR.parent
@@ -33,9 +38,9 @@ CCODE_STUDENT_PROMPTS_DIR = TESTING_DIR / "ccode_student_prompts"
 
 
 # API keys live in testing/.env — kept out of git by the repo-wide .env
-# rule in .gitignore. Needs ANTHROPIC_API_KEY. (RAG_5-9_ollama's
-# database_engine.py embeds via a local Ollama server, not a cloud API key
-# — see RAG_5-9_ollama/README.md for setup.)
+# rule in .gitignore. Needs ANTHROPIC_API_KEY unless *both* sides are run on
+# --*-backend ollama. (RAG_5-9_ollama's database_engine.py embeds via a local
+# Ollama server, not a cloud API key — see RAG_5-9_ollama/README.md for setup.)
 load_dotenv(TESTING_DIR / ".env")
 
 # RAG_5-9_ollama, not RAG_5-9 — this trial harness embeds via a local Ollama
@@ -46,7 +51,13 @@ RAG_DIR = ROOT_DIR / "RAG_5-9_ollama"
 sys.path.insert(0, str(RAG_DIR))
 from database_engine import ContextualVectorDB  # noqa: E402
 
-MODEL = "claude-sonnet-5"
+# The examiner call itself comes from backend/llm.py rather than being
+# reimplemented here. The two used to be parallel copies kept in sync by hand,
+# which defeats the point of the harness: numbers only mean something if the
+# trial calls the model exactly the way the deployed examiner does.
+sys.path.insert(0, str(BACKEND_DIR))
+from llm import active_backend, active_model, call_llm  # noqa: E402
+
 MAX_TURNS = 12
 INITIAL_MESSAGE = (
     "Everyone thinks of the mean as the central tendency or average, "
@@ -105,8 +116,6 @@ def concept_phrase(concepts: list[str]) -> str:
 def belief_line(concept_judgment: str, relevant_concepts: list[str]) -> str:
     return BELIEF_TEMPLATES[concept_judgment].format(phrase=concept_phrase(relevant_concepts))
 
-client = anthropic.Anthropic()
-
 rag_db = ContextualVectorDB(
     "my_contextual_db",
     db_path=str(RAG_DIR / "data" / "my_contextual_db" / "contextual_vector_db.pkl"),
@@ -135,43 +144,26 @@ def render_rag_blocks(blocks: list[str]) -> str:
     return "\n".join(f"--- Context Segment ---\n{block}\n" for block in blocks)
 
 
-def call_claude(messages, prompt, rag_context=None, output_schema=None, max_tokens=4096):
-    msgs = [dict(m) for m in messages]
+# Which backend each side of the conversation runs on. Set once in main() from
+# the CLI flags and read by run_trial, which is called from worker threads.
+EXAMINER_BACKEND = None
+STUDENT_BACKEND = None
 
-    system = [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}]
 
-    # Mirrors backend/app.py's call_claude: cache everything through the prior
-    # turn so each call only pays to process the newest message, instead of
-    # re-processing the whole growing transcript uncached every time. The
-    # breakpoint has to sit before wherever rag_context gets injected below —
-    # a block that changes every turn would otherwise invalidate any cache
-    # breakpoint that comes after it.
-    if len(msgs) >= 2:
-        prior = msgs[-2]
-        msgs[-2] = {
-            **prior,
-            "content": [{"type": "text", "text": prior["content"], "cache_control": {"type": "ephemeral"}}],
-        }
-
-    if rag_context:
-        latest = msgs[-1]
-        msgs[-1] = {**latest, "content": f"<verified_context>\n{rag_context}\n</verified_context>\n\n{latest['content']}"}
-
-    kwargs = {}
-    if output_schema:
-        kwargs["output_config"] = {"format": {"type": "json_schema", "schema": output_schema}}
-
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=max_tokens,
-        thinking={"type": "adaptive", "display": "summarized"},
-        system=system,
-        messages=msgs,
-        **kwargs,
+def call_examiner(messages, prompt, rag_context=None, output_schema=None, max_tokens=4096):
+    text, _thinking = call_llm(
+        messages, prompt, rag_context=rag_context, output_schema=output_schema,
+        max_tokens=max_tokens, backend=EXAMINER_BACKEND,
     )
-    if response.stop_reason == "max_tokens":
-        raise RuntimeError("Response was truncated (hit max_tokens)")
-    return next(block.text for block in response.content if block.type == "text")
+    return text
+
+
+def call_student(messages, prompt, rag_context=None, max_tokens=1024):
+    text, _thinking = call_llm(
+        messages, prompt, rag_context=rag_context, max_tokens=max_tokens,
+        backend=STUDENT_BACKEND,
+    )
+    return text
 
 
 def format_examiner_turn(parsed: dict) -> str:
@@ -195,13 +187,13 @@ def run_trial(persona_name: str, student_prompt: str, examiner_prompt: str, tria
         turns_used = turn
 
         student_rag = render_rag_blocks(get_rag_context(current_question))
-        student_answer = call_claude(student_messages, student_prompt, rag_context=student_rag, max_tokens=1024)
+        student_answer = call_student(student_messages, student_prompt, rag_context=student_rag)
         student_messages.append({"role": "assistant", "content": student_answer})
         transcript.append({"turn": turn, "role": "student", "text": student_answer})
 
         examiner_rag = render_rag_blocks(get_rag_context(student_answer))
         examiner_messages.append({"role": "user", "content": student_answer})
-        raw = call_claude(examiner_messages, examiner_prompt, rag_context=examiner_rag, output_schema=EXAMINER_SCHEMA)
+        raw = call_examiner(examiner_messages, examiner_prompt, rag_context=examiner_rag, output_schema=EXAMINER_SCHEMA)
         parsed = json.loads(raw)
         examiner_messages.append({"role": "assistant", "content": format_examiner_turn(parsed)})
 
@@ -258,10 +250,22 @@ def main():
                          help="Which personas to test (default: all)")
     parser.add_argument("--workers", type=int, default=3,
                          help="Concurrent trials to run at once (default: 3 — sequential; raising this sends more "
-                              "concurrent requests to your local Ollama server and the Anthropic API)")
+                              "concurrent requests to your local Ollama server and the Anthropic API). A self-hosted "
+                              "Ollama server serializes generation by default, so raising this against "
+                              "--examiner-backend ollama buys throughput only up to that limit")
+    parser.add_argument("--examiner-backend", choices=["anthropic", "ollama"], default=None,
+                         help="Backend for the examiner under test (default: the LLM_BACKEND env var, else anthropic)")
+    parser.add_argument("--student-backend", choices=["anthropic", "ollama"], default="anthropic",
+                         help="Backend for the simulated student (default: anthropic). Held constant on purpose: "
+                              "swapping the examiner is only interpretable if the student it faces doesn't move too. "
+                              "Change it only to run without an Anthropic key at all")
     parser.add_argument("--out", default=str(TESTING_DIR / "6_results.json"),
                          help="Path to write full results/transcripts JSON")
     args = parser.parse_args()
+
+    global EXAMINER_BACKEND, STUDENT_BACKEND
+    EXAMINER_BACKEND = args.examiner_backend
+    STUDENT_BACKEND = args.student_backend
 
     with open(BACKEND_DIR / "examiner_prompt.txt", encoding="utf-8") as f:
         examiner_prompt = f.read()
@@ -277,7 +281,9 @@ def main():
         for trial_index in range(1, args.trials + 1)
     ]
 
-    print(f"Running {len(jobs)} trial(s) across personas {args.personas} ({args.workers} concurrent workers)...")
+    print(f"Running {len(jobs)} trial(s) across personas {args.personas} ({args.workers} concurrent workers)")
+    print(f"  examiner: {active_backend(EXAMINER_BACKEND)} / {active_model(EXAMINER_BACKEND)}")
+    print(f"  student:  {active_backend(STUDENT_BACKEND)} / {active_model(STUDENT_BACKEND)}")
 
     results = []
     with ThreadPoolExecutor(max_workers=args.workers) as pool:

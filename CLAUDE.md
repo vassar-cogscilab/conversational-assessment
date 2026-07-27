@@ -60,9 +60,42 @@ Actions tab. The first deploy is already live and verified.
 - The backend loads `.env` via `python-dotenv` (`load_dotenv()` in `app.py`).
   The deploy writes that `.env` from the `LLM_API_KEY` secret as
   `ANTHROPIC_API_KEY`. `/convo/api/health` reports `hasApiKey` to confirm it
-  loaded (without exposing the key).
+  loaded (without exposing the key), plus the active `backend` and `model`.
 - Secrets/env: copy `.env.example` → real `.env` (gitignored). Document any new
   env var you introduce.
+- **The deploy rewrites `~/convo-api/.env` wholesale on every push.** Anything
+  set by hand on the server is lost on the next deploy — wire new vars through
+  the `Write backend .env` step in `deploy.yml` (secrets via `secrets.`,
+  non-secret config via repo `vars.`).
+- **The server runs Python 3.9.** PEP 604 unions (`str | None`) raise a
+  `TypeError` at import time there even though they parse fine locally; use
+  `from __future__ import annotations` in any module that wants them.
+  `list[str]` is fine (3.9 has PEP 585).
+
+## The examiner's LLM backend
+
+`backend/llm.py` is the single entry point for model calls, shared by
+`backend/app.py` and `testing/run_trials.py` so the trial harness can't drift
+from what the deployed examiner does. It has two interchangeable backends,
+selected by the `LLM_BACKEND` env var:
+
+- `anthropic` (**default**) — Claude via the Anthropic API.
+- `ollama` — a self-hosted Ollama server on the lab's GPU box (`lambda-server`),
+  reached over Tailscale. Uses Ollama's **native** `/api/chat`, not its
+  OpenAI-compatible `/v1` endpoint: only the native one exposes `think` and
+  `format` together, and dropping either would cost the admin-visible reasoning
+  trail (`turn_log[].reasoning`) or the schema guarantee.
+
+Anthropic stays the default deliberately — the Ollama path adds a dependency on
+the tailnet and on one GPU box being up, and keeping the fallback one env var
+away makes an outage a config change rather than a rollback. Flip backends by
+setting the `LLM_BACKEND` **repository variable** and re-running the deploy.
+
+Both backends return the same `(text, thinking)` pair, so callers never branch.
+`/convo/api/string` returns **503** (not 500) when a backend is unreachable or
+returns something unparseable, and does not write to the session until the turn
+has fully succeeded — the transcript must stay strictly alternating or the
+session is permanently wedged.
 
 ## Cautions
 

@@ -8,13 +8,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
-import anthropic
+
+from llm import LLMError, active_backend, active_model, call_llm
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
-client = anthropic.Anthropic()
 
 BASE_DIR = Path(__file__).resolve().parent
 RAG_DIR = BASE_DIR.parent / "RAG_5-9"
@@ -75,49 +75,6 @@ def get_rag_context(query: str, k: int = 4) -> list[str]:
 def render_rag_blocks(blocks: list[str]) -> str:
     return "\n".join(f"--- Context Segment ---\n{block}\n" for block in blocks)
 
-
-def call_claude(messages, prompt, rag_context=None, output_schema=None):
-    msgs = [dict(m) for m in messages]
-
-    system = [{"type": "text", "text": prompt, "cache_control": {"type": "ephemeral"}}]
-
-    # Cache everything through the prior turn so each call only pays to process
-    # the newest message, instead of re-processing the whole growing transcript
-    # uncached every time. The breakpoint has to sit before wherever rag_context
-    # gets injected below — a block that changes every turn would otherwise
-    # invalidate any cache breakpoint that comes after it.
-    if len(msgs) >= 2:
-        prior = msgs[-2]
-        msgs[-2] = {
-            **prior,
-            "content": [{"type": "text", "text": prior["content"], "cache_control": {"type": "ephemeral"}}],
-        }
-
-    if rag_context:
-        latest = msgs[-1]
-        msgs[-1] = {**latest, "content": f"<verified_context>\n{rag_context}\n</verified_context>\n\n{latest['content']}"}
-
-    kwargs = {}
-    if output_schema:
-        kwargs["output_config"] = {"format": {"type": "json_schema", "schema": output_schema}}
-
-
-    response = client.messages.create(
-        model="claude-sonnet-5",
-        max_tokens=4096,
-        thinking={"type": "adaptive", "display": "summarized"},
-        system=system,
-        messages=msgs,
-        **kwargs,
-    )
-    if response.stop_reason == "max_tokens":
-        raise RuntimeError(
-            "Claude response was truncated (hit max_tokens) before finishing — "
-            "increase max_tokens in call_claude."
-        )
-    text = next(block.text for block in response.content if block.type == "text")
-    thinking = next((block.thinking for block in response.content if block.type == "thinking"), "")
-    return text, thinking
 
 _STRAY_UNICODE_ESCAPE_RE = re.compile(r"\\u([0-9a-fA-F]{4})")
 
@@ -185,9 +142,15 @@ def format_examiner_turn(parsed: dict) -> str:
 @app.get("/")
 @app.get("/health")
 def health():
+    # hasApiKey stays meaningful only on the Anthropic path — the Ollama backend
+    # authenticates by being on the tailnet, so a missing key isn't a fault
+    # there. Reporting the backend and model makes it possible to tell from
+    # outside which one a deploy actually came up on.
     return jsonify(
         ok=True,
         service="convo-api",
+        backend=active_backend(),
+        model=active_model(),
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
@@ -225,20 +188,43 @@ def get_string():
     session = sessions[session_id]
 
     rag_blocks = get_rag_context(user_input)
-    session["rag_contexts"].append(rag_blocks)
     rag_context = render_rag_blocks(rag_blocks)
 
-    session["messages"].append({"role": "user", "content": user_input})
+    # Nothing is written back to the session until the turn has fully succeeded.
+    # The examiner's transcript has to stay strictly alternating: if the model
+    # call failed after the user turn had already been appended, the next
+    # attempt would send two user messages in a row and the session would be
+    # permanently wedged rather than merely having dropped one reply.
+    pending_messages = session["messages"] + [{"role": "user", "content": user_input}]
 
-    claude_response, thinking = call_claude(
-        session["messages"], examiner_prompt, rag_context=rag_context, output_schema=EXAMINER_SCHEMA
-    )
-    parsed = json.loads(claude_response)
-    parsed["question"] = fix_stray_unicode_escapes(parsed["question"])
+    try:
+        raw_response, thinking = call_llm(
+            pending_messages, examiner_prompt, rag_context=rag_context, output_schema=EXAMINER_SCHEMA
+        )
+        parsed = json.loads(raw_response)
+        # Schema-conformance is enforced by the backend (Anthropic's
+        # output_config, Ollama's constrained decoding), but a malformed or
+        # short-of-schema reply is a backend fault, not a 500 in this app — so
+        # it's reported the same way as an unreachable model. Every required
+        # field this route goes on to use is touched inside the try, so a reply
+        # that parses but is missing one still lands here rather than 500ing.
+        belief = belief_line(parsed["concept_judgment"], parsed["relevant_concepts"])
+        parsed["question"] = fix_stray_unicode_escapes(parsed["question"])
+    # The detail is logged, not returned: it names the internal Ollama host and
+    # port, and the frontend renders a generic message for any non-2xx anyway.
+    except LLMError as exc:
+        app.logger.error("examiner call failed: %s", exc)
+        return jsonify(error="llm_unavailable"), 503
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        app.logger.error("examiner returned an unusable response: %s", exc)
+        return jsonify(error="llm_bad_response"), 503
+
+    session["rag_contexts"].append(rag_blocks)
+    session["messages"] = pending_messages
 
     session.setdefault("turn_log", []).append({
         "reasoning": thinking,
-        "belief": belief_line(parsed["concept_judgment"], parsed["relevant_concepts"]),
+        "belief": belief,
         **{k: parsed[k] for k in ("relevant_concepts", "target_misconceptions", "concept_judgment")},
     })
 

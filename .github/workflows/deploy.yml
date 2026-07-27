@@ -80,8 +80,20 @@ jobs:
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
           # Shared secret for the /admin/sessions endpoints (app.py).
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          # Non-secret backend selection (backend/llm.py). Repository *variables*,
+          # not secrets — they're configuration, and being able to read them back
+          # in the Actions UI is the point. This step rewrites .env wholesale, so
+          # anything set by hand on the server is lost on the next deploy: an
+          # LLM_BACKEND flipped over SSH would silently revert to Anthropic. Set
+          # the repo variable instead (Settings -> Secrets and variables ->
+          # Actions -> Variables).
+          LLM_BACKEND: ${{ vars.LLM_BACKEND }}
+          OLLAMA_HOST: ${{ vars.OLLAMA_HOST }}
+          OLLAMA_MODEL: ${{ vars.OLLAMA_MODEL }}
+          OLLAMA_NUM_CTX: ${{ vars.OLLAMA_NUM_CTX }}
+          OLLAMA_KEEP_ALIVE: ${{ vars.OLLAMA_KEEP_ALIVE }}
         run: |
-          if [ -z "$LLM_API_KEY" ]; then
+          if [ -z "$LLM_API_KEY" ] && [ "$LLM_BACKEND" != "ollama" ]; then
             echo "::warning::LLM_API_KEY secret is empty; leaving existing .env untouched"
             exit 0
           fi
@@ -91,11 +103,21 @@ jobs:
           if [ -z "$ADMIN_TOKEN" ]; then
             echo "::warning::ADMIN_TOKEN secret is empty; /admin/sessions will be unauthenticated until it's set"
           fi
+          # Emit "NAME=value" only for non-empty values, so an unset optional var
+          # falls through to the default in llm.py rather than being written as an
+          # empty string. Each guard is a full `if` rather than `[ -n x ] && printf`
+          # so the group's exit status can't be a stray 1 from the last test.
+          emit() { if [ -n "$2" ]; then printf '%s=%s\n' "$1" "$2"; fi; }
           # Pipe over stdin (keys never appear in argv) and create with umask 077 (file mode 600).
           {
-            printf 'ANTHROPIC_API_KEY=%s\n' "$LLM_API_KEY"
-            [ -n "$VOYAGE_API_KEY" ] && printf 'VOYAGE_API_KEY=%s\n' "$VOYAGE_API_KEY"
-            [ -n "$ADMIN_TOKEN" ] && printf 'ADMIN_TOKEN=%s\n' "$ADMIN_TOKEN"
+            emit ANTHROPIC_API_KEY "$LLM_API_KEY"
+            emit VOYAGE_API_KEY    "$VOYAGE_API_KEY"
+            emit ADMIN_TOKEN       "$ADMIN_TOKEN"
+            emit LLM_BACKEND       "$LLM_BACKEND"
+            emit OLLAMA_HOST       "$OLLAMA_HOST"
+            emit OLLAMA_MODEL      "$OLLAMA_MODEL"
+            emit OLLAMA_NUM_CTX    "$OLLAMA_NUM_CTX"
+            emit OLLAMA_KEEP_ALIVE "$OLLAMA_KEEP_ALIVE"
           } | ssh -i ~/.ssh/deploy_key \
                 "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
                 "umask 077 && cat > '${REMOTE_BACKEND}/.env'"

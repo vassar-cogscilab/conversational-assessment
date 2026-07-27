@@ -2,6 +2,10 @@ Flask==3.1.0
 python-dotenv==1.0.1
 gunicorn==23.0.0
 anthropic==0.109.1
+# Already present transitively (the anthropic SDK is built on it); pinned
+# explicitly because backend/llm.py's Ollama path imports it directly rather
+# than relying on another package's dependency.
+httpx==0.28.1
 natsort==8.4.0
 langchain-text-splitters==0.3.11
 numpy==2.0.2
