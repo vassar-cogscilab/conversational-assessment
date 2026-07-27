@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import uuid
@@ -48,29 +49,18 @@ def save_sessions():
         json.dump(sessions, f, ensure_ascii=False, indent=2)
 
 INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
-# INITIAL_MESSAGE targets concept 1 ("Understand what a model is and the mean
-# as a model") — it's the only question not produced by the examiner itself,
-# so there's no parsed["target_concept"] to seed current_target_concept from.
 
-# Conversation starter so the model sees the initial question in its history
 BASE_MESSAGES = [
     {"role": "assistant", "content": INITIAL_MESSAGE},
 ]
 
 
 def get_rag_context(query: str, k: int = 4) -> list[str]:
-    # RAG embeddings run through Ollama over an SSH tunnel to a remote
-    # research machine — treat that link as unreliable and degrade to no
-    # context rather than 500ing the student's turn if it's down.
     try:
         results = rag_db.search(query, k=k)
     except Exception as exc:
         print(f"RAG lookup failed, continuing without context: {exc}")
         return []
-    # contextualized_content is a retrieval aid baked into the embedding, not
-    # something the model needs to read — only the source text goes in the
-    # prompt. Dedup guards against near-identical/overlapping chunks (from
-    # the chunker's sliding window) landing in the same top-k result.
     seen = set()
     blocks = []
     for match in results:
@@ -119,6 +109,13 @@ def call_claude(messages, prompt, rag_context=None, output_schema=None):
     thinking = next((block.thinking for block in response.content if block.type == "thinking"), "")
     return text, thinking
 
+_STRAY_UNICODE_ESCAPE_RE = re.compile(r"\\u([0-9a-fA-F]{4})")
+
+
+def fix_stray_unicode_escapes(text: str) -> str:
+    return _STRAY_UNICODE_ESCAPE_RE.sub(lambda m: chr(int(m.group(1), 16)), text)
+
+
 MAX_TURNS = 12
 
 EXAMINER_SCHEMA = {
@@ -126,26 +123,17 @@ EXAMINER_SCHEMA = {
     "properties": {
         "target_concept": {
             "type": "string", "enum": ["1", "2", "3", "4"],
-            "description": (
-                "The concept under <Understand_the_mean_as_a_model> that the NEW `question` "
-                "you're asking this turn is about — not the concept concept_judgment refers to."
-            ),
         },
         "target_misconceptions": {"type": "array", "items": {"type": "string"}},
         "concept_judgment": {
             "type": "string", "enum": ["know", "unclear", "do_not_know"],
-            "description": (
-                "Your step 3 judgment about the concept you were testing LAST turn (i.e. last "
-                "turn's target_concept, not this turn's) — the student's reply just answered it."
-            ),
         },
-        "explanation": {"type": "string"},
         "conversation_state": {"type": "string", "enum": ["ongoing", "finished"]},
         "understanding_of_mean_as_model": {"type": "string", "enum": ["Pending", "Poor", "High"]},
         "question": {"type": "string"},
     },
     "required": [
-        "target_concept", "target_misconceptions", "concept_judgment", "explanation",
+        "target_concept", "target_misconceptions", "concept_judgment",
         "conversation_state", "understanding_of_mean_as_model", "question",
     ],
     "additionalProperties": False,
@@ -164,12 +152,6 @@ def belief_line(concept_judgment: str, judged_concept: str) -> str:
 
 
 def format_examiner_turn(parsed: dict, judged_concept: str) -> str:
-    # Re-render the structured output as the plain-text shape examiner_prompt.txt's
-    # own <conversation_examples> use, so each turn keeps pattern-matching against
-    # its own few-shot history. reasoning/target_concept/target_misconceptions/
-    # explanation are deliberately left out of what gets replayed — they're
-    # admin-only bookkeeping (see turn_log in /string), not part of the few-shot
-    # pattern, and keeping them out is what lets the belief line stay terse.
     lines = [f"Belief: {belief_line(parsed['concept_judgment'], judged_concept)}"]
     if parsed["conversation_state"] == "finished":
         lines.append("Conversation state: finished")
@@ -233,12 +215,13 @@ def get_string():
         session["messages"], examiner_prompt, rag_context=rag_context, output_schema=EXAMINER_SCHEMA
     )
     parsed = json.loads(claude_response)
+    parsed["question"] = fix_stray_unicode_escapes(parsed["question"])
 
     session.setdefault("turn_log", []).append({
         "reasoning": thinking,
         "belief": belief_line(parsed["concept_judgment"], judged_concept),
         "judged_concept": judged_concept,
-        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "concept_judgment", "explanation")},
+        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "concept_judgment",)},
     })
 
     session["messages"].append({"role": "assistant", "content": format_examiner_turn(parsed, judged_concept)})
