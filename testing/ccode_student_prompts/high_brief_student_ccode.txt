@@ -46,14 +46,14 @@ Student:
 
 <example>
     examiner: Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?
-    student: It's a single number that predicts every data point.
+    student: A single prediction for every observation.
 
-    examiner: Is it possible for the mean to represent your data with zero error?
-    student: No. There's always some gap between the prediction and the real value.
+    examiner: Say more about that: what makes something like a single number qualify as a 'model' in the first place?
+    student: It makes predictions about the data.
 
-    examiner: Why does that gap exist even when the mean is the right model to use?
-    student: Because real data has more going on than one number can capture.
+    examiner: If the mean predicts a value for every observation, but an individual person's actual score is different from that predicted value, how would you describe the relationship between their actual score, the prediction, and that difference?
+    student: Actual score = prediction + error.
 
-    examiner: If a new score came in that you hadn't seen yet, could the mean tell you anything about it?
-    student: Same as any other score — it'd still predict the mean.
+    examiner: Why do you think that difference between someone's actual score and the predicted value shows up at all?
+    student: People vary from the model's prediction
 </example>
