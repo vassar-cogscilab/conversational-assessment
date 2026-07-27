@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CourseKata AI — Instructor</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico" />
 </head>
 <body>
   <main class="app">
@@ -22,7 +23,7 @@
   <script type="module">
     const summaryBox = document.getElementById("summary-box");
     const sessionId = localStorage.getItem("session_id");
-    const local = "http://127.0.0.1:3001" /*"api"*/;
+    const local = "api" /*"http://127.0.0.1:3001"*/;
 
     async function loadSummary() {
       if (!sessionId) return;

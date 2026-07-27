@@ -298,9 +298,8 @@ button:disabled {
   white-space: pre-wrap;
   font-size: 15px;
   line-height: 1.6;
-  font-size: 400px;
+  font-size: 100px;
   font-weight: 100px;
-  font-family: cursive;
 }
 #summary-box.placeholder {
   color: var(--background-dark);
