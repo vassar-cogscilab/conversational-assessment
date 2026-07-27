@@ -1,0 +1,511 @@
+[
+  {
+    "persona": "ccode_high_brief",
+    "trial_index": 1,
+    "expected": "High",
+    "guess": "High",
+    "correct": true,
+    "turns_used": 5,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "It's a single predicted value applied to every observation."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "If I told you the actual data doesn't always match that single predicted value, what would you say is happening between the data and the model?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "1",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "That gap is the error — expected leftover, not a mistake."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "Thinking about a whole dataset and its mean, how would you describe the relationship between an individual data point, the model's prediction, and the error, all together?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "3",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "The data point equals the model's prediction plus its error."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "If you added up all the errors (the gaps between each data point and the mean) across your whole dataset, what would you expect to happen, and why?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "2",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "They sum to zero — the mean is the point that balances positive and negative deviations exactly."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Suppose a new observation came in that wasn't part of the original dataset used to calculate the mean. Would the mean still give you a prediction for that new observation, and if so, what would that prediction be?",
+        "belief": "The student demonstrates that they know concept 2.",
+        "judged_concept": "2",
+        "target_concept": "3",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "Yes — same mean value, since it's a general rule, not just a summary of the old data."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "That concludes our conversation, thank you for participating!",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "4",
+        "target_misconceptions": []
+      }
+    ]
+  },
+  {
+    "persona": "ccode_high_right",
+    "trial_index": 1,
+    "expected": "High",
+    "guess": "High",
+    "correct": true,
+    "turns_used": 5,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "So when we say the mean is a model, we're saying that it functions the same way as any other statistical model does — it's a prediction machine. If I had to guess the value of any single data point in a dataset, without knowing anything else about it, the mean is my best single guess. So it's not just a descriptive summary sitting there after the fact, it's actually something I could use *predictively* — like, if a new person walked in and I had to bet on their test score before seeing it, I'd bet on the mean.\n\nThat's actually a pretty different way of thinking about it than \"the average of these specific numbers I already have.\" A model, by definition, is something that produces a predicted score, and the mean does exactly that — it just produces the *same* predicted score for every single observation, which is kind of the simplest possible model you could build. It's not adjusting based on any other information about the person or case, it's just saying \"my best guess for anybody is this one number.\"\n\nAnd once you think of it that way, it sets up the whole DATA = MODEL + ERROR idea really naturally. Each actual data point is the model's prediction (the mean) plus however far off that prediction was for that particular case. So the \"model\" isn't just a shape or a summary — it's the thing generating the guess, and the real data point is always going to be some distance away from that guess, which is the error."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "You mentioned that a real data point is always some distance away from the model's guess, and that gap is the error. Why does that gap exist in the first place—what would you say is actually causing it?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "1",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "That gap exists basically because the model is a massive simplification of something that's actually really complicated underneath. Think about test scores in a class — the mean might be 75, but any individual student's score depends on how much they studied, how they slept the night before, whether they're good at multiple choice versus essays, whether they got lucky guessing on a couple questions, whatever. The mean can't possibly capture all of that, because it's just one number standing in for the whole distribution. So the error isn't really a flaw in our math, it's more like a reflection of everything about that individual case that the model didn't or couldn't account for.\n\nIt's the same idea as the California example, actually — you draw some geometric shapes to approximate the state's borders, and the leftover bits, the parts sticking out or not covered, aren't \"mistakes,\" they're just all the real, messy detail of the actual coastline that a simple shape was never going to capture perfectly. The mean is doing the same job for a distribution of scores. It's deliberately throwing away all the individual variability to give you one clean number, so of course actual data points are going to land above or below it — that's not the model failing, that's just what happens when you compress a whole distribution of different people or cases down into a single predicted value.\n\nSo I'd say the error is coming from real variability in the world — individual differences, randomness, factors we haven't measured or built into the model — and the mean, being the simplest model there is, doesn't try to explain any of that variability. It just gives you the best single guess and leaves the rest as error by design."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "Suppose you calculated the mean test score from this semester's class, and then a new student who wasn't in your original group took the same test. Would that mean still tell you anything useful about predicting their score, or is it only meaningful for the students whose scores went into calculating it?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "3",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "Yeah, I'd say it would still tell you something useful, and actually this gets at something important — the mean isn't just a fact about the specific dataset it came from, it's a general rule you can apply going forward, as long as you have reason to believe the new case comes from a similar population.\n\nSo if this new student is just another student taking the same test, presumably prepared in a similar way, under similar conditions, then the class mean is still my best guess for them too. I don't have any individual information about this new student, so I fall back on the same logic as before — without anything else to go on, the single best predictor I have is still that average score. It's the same move as predicting a new person's height using the mean height of the sample, even though that particular person wasn't measured — the mean was never really \"about\" those specific individuals, it's a summary of the process or population they came from, and this new student is presumably part of that same population.\n\nNow, there'd obviously still be error — this new student's actual score probably won't be exactly 75, or whatever the mean was. But that's fine, that's expected, that's just the same DATA = MODEL + ERROR logic applying to a brand new case instead of one already baked into the calculation. The only thing that would make me hesitate is if I had some reason to think this new student was fundamentally different from the original group — like if they were from a completely different course or skill level — because then the model might not transfer well. But absent that information, yeah, the mean still works as a prediction."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "You've mentioned that each student's actual score will differ from the mean by some amount, above or below it. If you imagined adding up all of those differences across every single student in the original class, what would you expect that total to come out to, and why?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "4",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "I'd expect that to come out to exactly zero. And at first that might seem like a weird coincidence, but it's actually guaranteed by the way the mean itself is defined — the mean is basically the balancing point of the data, so the positive deviations above it and the negative deviations below it are mathematically forced to cancel each other out perfectly.\n\nLike, think of it almost like a seesaw. If you've got some students who scored way above the mean, and some who scored below, the mean is the specific point where the total \"distance\" pulling up equals the total distance pulling down. That's not incidental — that's actually how the mean gets calculated in the first place. You're taking the sum of all the scores and dividing by how many there are, and if you rearrange that algebraically, it falls right out that the sum of the deviations from that number has to be zero. If it didn't balance out to zero, then that number wouldn't have been the mean to begin with — it'd be some other value.\n\nSo in the DATA = MODEL + ERROR framing, this is telling us something kind of elegant about the mean as a model specifically: it's not just \"a\" prediction, it's the one prediction that makes the positive and negative errors balance out perfectly across the whole group. Other numbers wouldn't do that — if I picked some other value as my model, like say the max score instead, I'd get way more negative errors than positive ones, and they wouldn't sum to zero. So that zero-sum property is really a defining feature of the mean as our error-minimizing, balancing model."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Thinking back to that class of test scores, if I told you a particular student's data value, the model's prediction, and their error, how would those three pieces relate to each other to reconstruct that student's actual score?",
+        "belief": "The student demonstrates that they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "3",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "Well, that's really just the DATA = MODEL + ERROR equation in action, just running in the direction of reconstruction rather than calculation. If I know the model's prediction — say, the class mean of 75 — and I know the error for that particular student, say +8, then I can just add those two together to get their actual score: 75 plus 8 gives me 83. So DATA equals MODEL plus ERROR isn't just a conceptual statement, it's literally an arithmetic one — you can solve for any one of those three pieces if you know the other two.\n\nAnd it makes sense in the other direction too, which is actually how we usually first calculate the error in practice — we know the actual score and we know the model's prediction, so we get the error by subtracting, ERROR equals DATA minus MODEL. So it's the same relationship, just rearranged depending on which piece you're solving for.\n\nI think what's kind of nice about thinking of it this way is it reinforces that the error isn't some separate, mysterious quantity — it's precisely defined as whatever's left over once you take the model's prediction away from the real, observed value. So for that one student, their actual test score is completely reconstructible if you just take the group's flat prediction and then adjust it by however far off that student personally was from that group prediction."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "That concludes our conversation—thank you for participating and sharing such thorough explanations.",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "2",
+        "target_misconceptions": []
+      }
+    ]
+  },
+  {
+    "persona": "ccode_poor_right",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "Poor",
+    "correct": true,
+    "turns_used": 9,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "The mean is a model because it's the one number that balances everything out — the stuff above it and the stuff below it even out. So instead of describing each score separately, you use that one balancing number to stand in for the whole group."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "If you used that single balancing number to stand in for every actual score in your group, how would you describe the relationship between what that number predicts and what the actual scores really are?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "1",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "I'd say they should basically match up pretty closely, since the mean is built from those exact scores in the first place. So the number the model predicts and the real score aren't all that different — the mean is kind of just standing in for what each person's score already is."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "Let’s say the mean score on a class quiz is 80, and one student actually scored 92. How would you describe what’s going on between that student’s real score and the predicted score of 80?",
+        "belief": "The student demonstrates that they do not know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "2.1",
+          "2.2",
+          "3.1"
+        ]
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "That student's score of 92 is 12 points off from what the model said, so there's some error there. It kind of feels like the model missed on that one — like the prediction wasn't quite right for that particular student, sort of a mistake in how well 80 captured them."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "You called that 12-point gap a 'mistake' — do you think it's possible to ever pick a single number to represent the whole class where no student's score misses like that, or is that gap something you'd always expect to see?",
+        "belief": "I cannot tell from the student's response whether they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.1",
+          "3.3"
+        ]
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "I think if the class scores were similar enough, you could find a number that fits everyone close enough that there's basically no real gap. So it's not that error always has to be there — it's more like a sign that the scores are spread out, and with a tighter group you could get a model that really nails it for everyone."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Even in a very tight group of scores, if people still differ from each other at all, do you think using one single number to represent everyone could ever fully avoid that kind of gap for every single person?",
+        "belief": "The student demonstrates that they do not know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.2"
+        ]
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "I guess if literally every person had the exact same score, then yeah, one number would fit everyone perfectly. But if there's even a little bit of difference between people, someone's always going to be a little off from that number — so maybe some gap is unavoidable, though it still feels like just a small mistake rather than something the model is supposed to have."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "You keep calling that gap a mistake — do you think it happens because something went wrong with the data or the model, or is it something that would show up even if everything were measured and calculated perfectly?",
+        "belief": "I cannot tell from the student's response whether they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.1"
+        ]
+      },
+      {
+        "turn": 6,
+        "role": "student",
+        "text": "I think it would still show up even if everything was measured perfectly, since people are just different from each other and one number can't capture everyone exactly. So maybe it's not that something went wrong, it's just that using one flat number for a bunch of different people is bound to leave some of them not quite matching — though it still bugs me to think of that as normal instead of an error to fix."
+      },
+      {
+        "turn": 6,
+        "role": "examiner",
+        "text": "Thinking back to that quiz example with the mean of 80 and the student who scored 92 — if you were to describe the real score, the predicted score, and that gap all together as separate pieces, how would you explain what each piece is telling you?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.2"
+        ]
+      },
+      {
+        "turn": 7,
+        "role": "student",
+        "text": "The 92 would be the actual data — the real thing that happened. The 80 is the model's prediction, the piece that's supposed to represent everybody in one number. And the gap, the 12 points, is the error — it's what's left over that the model didn't capture, like the part of that student that just doesn't fit the average."
+      },
+      {
+        "turn": 7,
+        "role": "examiner",
+        "text": "Suppose you only had the mean quiz score of 80, and a new student who hadn't taken the quiz yet walked in. Could you use that number to say anything about what score you'd expect from this new student, even though they weren't part of the original group?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "2",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 8,
+        "role": "student",
+        "text": "I don't think it would tell you much about that new student, since 80 came from the specific group of students who actually took that quiz. That new student wasn't part of what made up that number, so it seems like it wouldn't really apply to them the same way."
+      },
+      {
+        "turn": 8,
+        "role": "examiner",
+        "text": "If that mean score of 80 came from a group of students who took the same class, taught the same material, under the same conditions, would you expect it to say nothing at all about a new student walking into that same class, or might it still offer some kind of guess?",
+        "belief": "The student demonstrates that they do not know concept 2.",
+        "judged_concept": "2",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      },
+      {
+        "turn": 9,
+        "role": "student",
+        "text": "Okay, when you put it that way, maybe it could still give some kind of rough guess, since the new student is walking into basically the same situation as everyone else. But it still feels like it wouldn't be as solid as a guess for someone who was actually part of the original group."
+      },
+      {
+        "turn": 9,
+        "role": "examiner",
+        "text": "That concludes our conversation — thank you for taking the time to work through these questions with me!",
+        "belief": "The student demonstrates that they do not know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      }
+    ]
+  },
+  {
+    "persona": "ccode_poor_brief",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "High",
+    "correct": false,
+    "turns_used": 11,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "The mean's the model 'cause it's like... the guess you'd use for every data point, instead of the actual number."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "Suppose I used the mean amount of sleep students get as my guess for how much sleep any given student got last night. If a particular student actually slept a different amount than that guess, how would you describe what's happening between my guess and their actual sleep amount?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "1",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "That's error. Like the model got it wrong for that student."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "When you say the model 'got it wrong,' do you think that means something went wrong with the model itself, or is that difference just something you'd expect to happen even with a good guess?",
+        "belief": "I cannot tell from the student's response whether they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.1",
+          "3.3"
+        ]
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "I mean... if it's off, doesn't that mean it's not a great guess? A really good model would have less of that gap."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "Do you think it would be possible to come up with a single guess for everyone's sleep that has absolutely no gap at all for any student, or is some gap unavoidable no matter how you pick your guess?",
+        "belief": "I cannot tell from the student's response whether they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.1",
+          "3.2"
+        ]
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "Unavoidable, probably, unless everyone slept the exact same amount."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Thinking about that unavoidable gap between the actual sleep amounts and your guess, how would you describe the relationship between a student's actual sleep, your guess, and that leftover gap—like how do those three things fit together?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "Actual sleep is like the guess plus however far off it was, so data equals the guess plus that gap."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "If a new student, who wasn't part of your original group, told you their sleep amount, could your same guess still be used to predict their sleep, or would you need to start over with a completely new number?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "2",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 6,
+        "role": "student",
+        "text": "Probably you'd need a new number since they weren't in the original group your guess came from."
+      },
+      {
+        "turn": 6,
+        "role": "examiner",
+        "text": "Suppose that new student's actual sleep amount turned out to be unknown, and all you had was your original guess based on the other students. Even though this student wasn't part of the group that formed that guess, could that same number still serve as a reasonable prediction for them, or does it only make sense for students who were part of the original group?",
+        "belief": "The student demonstrates that they do not know concept 2.",
+        "judged_concept": "2",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      },
+      {
+        "turn": 7,
+        "role": "student",
+        "text": "I guess it could still work as a guess for them too, but it feels weird since they weren't part of what made the number."
+      },
+      {
+        "turn": 7,
+        "role": "examiner",
+        "text": "You said it feels a little strange to use that same number for someone who wasn't part of the original group—what do you think would need to be true about that new student for your original guess to still make sense as a reasonable prediction for them?",
+        "belief": "I cannot tell from the student's response whether they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      },
+      {
+        "turn": 8,
+        "role": "student",
+        "text": "Probably like... they'd need to be similar to the other students, like from the same group or same kind of situation, otherwise the number wouldn't really fit them."
+      },
+      {
+        "turn": 8,
+        "role": "examiner",
+        "text": "Thinking back to the original group of students who gave you that number in the first place — since they all actually slept different amounts, would you still use that same single number as your guess for every one of them, or would you want a different guess for each student?",
+        "belief": "I cannot tell from the student's response whether they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      },
+      {
+        "turn": 9,
+        "role": "student",
+        "text": "Same number for all of them, yeah — that's the whole point of it being one guess for everyone."
+      },
+      {
+        "turn": 9,
+        "role": "examiner",
+        "text": "Going back to that idea of the guess and the actual sleep amount together—if a student slept more than your guess, and another slept less, how would you describe the gap for each of them in relation to the guess?",
+        "belief": "The student demonstrates that they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 10,
+        "role": "student",
+        "text": "One's gap would be positive, above the guess, and the other's would be negative, below it."
+      },
+      {
+        "turn": 10,
+        "role": "examiner",
+        "text": "You mentioned that a new student would need to be similar to the original group for your guess to still make sense for them — in that case, would you say the guess itself changes from person to person, or is it the same single number applied to everyone, with only the leftover gap being different for each person?",
+        "belief": "The student demonstrates that they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "3",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 11,
+        "role": "student",
+        "text": "Same number for everyone — it's the gap that's different each time, not the guess."
+      },
+      {
+        "turn": 11,
+        "role": "examiner",
+        "text": "That concludes our conversation today—thank you for walking through these ideas about the mean as a model with me.",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "4",
+        "target_misconceptions": []
+      }
+    ]
+  }
+]

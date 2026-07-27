@@ -1,0 +1,197 @@
+[
+  {
+    "persona": "ccode_poor_brief",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "Poor",
+    "correct": true,
+    "turns_used": 11,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "The mean is like... the best guess for a data point, I gue1ss. Like if you had to predict one, you'd say the mean."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "If you used the mean as your best guess, would that same guess apply to every single person or item in your data, or would it change from one observation to the next?",
+        "belief": "I cannot tell from the student's response whether they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "1",
+        "target_misconceptions": [
+          "1.2",
+          "1.4"
+        ]
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "It would kind of change, since each person has their own value... the mean's more like a summary of all of them."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "When you say it would 'kind of change' from person to person, do you mean your actual guess number changes, or is it that the real value each person has is different even though your guess stays the same?",
+        "belief": "I cannot tell from the student's response whether they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "1",
+        "target_misconceptions": [
+          "1.2"
+        ]
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "Oh. I think the guess number stays the same actually, just the real value is different for each person."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "Suppose you used the mean of a set of exam scores as your prediction for a particular student's score, but that student actually scored differently. What would you call the gap between the mean prediction and that student's real score, and what does it represent?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "2",
+        "target_misconceptions": [
+          "2.1",
+          "2.2",
+          "2.3"
+        ]
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "That'd be the error, I think. It kind of means the model didn't get it exactly right for that person."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Thinking about that same exam score example, if we say the student's actual score equals the mean prediction plus this gap you called error, what do you think each of those three pieces \\u2014 the actual score, the mean prediction, and the error \\u2014 is really telling us?",
+        "belief": "I cannot tell from the student's response whether they know concept 2.",
+        "judged_concept": "2",
+        "target_concept": "2",
+        "target_misconceptions": [
+          "2.3"
+        ]
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "The actual score is the real data, the mean's the model's guess, and the error is just how far off that guess was for that one student."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "If you calculated the error for every single student's score against the mean, do you think those errors would always be positive, always negative, or a mix \\u2014 and why do you think that happens?",
+        "belief": "The student demonstrates that they know concept 2.",
+        "judged_concept": "2",
+        "target_concept": "3",
+        "target_misconceptions": []
+      },
+      {
+        "turn": 6,
+        "role": "student",
+        "text": "Probably a mix, since some students score above the mean and some below it."
+      },
+      {
+        "turn": 6,
+        "role": "examiner",
+        "text": "If you added up all of those positive and negative errors across every student, what do you think you'd get, and why?",
+        "belief": "I cannot tell from the student's response whether they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.2",
+          "3.4"
+        ]
+      },
+      {
+        "turn": 7,
+        "role": "student",
+        "text": "Maybe zero? Since the positives and negatives would cancel out somehow."
+      },
+      {
+        "turn": 7,
+        "role": "examiner",
+        "text": "You said the positives and negatives would cancel out 'somehow' \\u2014 is there something specific about how the mean is calculated that makes this happen, or do you think it's more of a coincidence?",
+        "belief": "I cannot tell from the student's response whether they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.4"
+        ]
+      },
+      {
+        "turn": 8,
+        "role": "student",
+        "text": "Not totally sure... maybe because the mean is like the balance point of all the scores, so it has to even out?"
+      },
+      {
+        "turn": 8,
+        "role": "examiner",
+        "text": "Suppose after collecting this year's exam scores and finding the mean, a new student transfers in and takes the same exam. Could you use that same mean as a prediction for this new student's score, even though their score wasn't part of the original calculation? Why or why not?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.1",
+          "4.2",
+          "4.3"
+        ]
+      },
+      {
+        "turn": 9,
+        "role": "student",
+        "text": "Hmm, I don't think so really... that mean came from those specific students, so not sure it'd apply to someone new."
+      },
+      {
+        "turn": 9,
+        "role": "examiner",
+        "text": "Let's say instead of a new student, it was just another student from the same class whose score you hadn't looked at yet when you calculated the mean. Would the mean still work as your best guess for that unseen student's score, or does it only work for the students whose scores were actually used to calculate it?",
+        "belief": "I cannot tell from the student's response whether they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      },
+      {
+        "turn": 10,
+        "role": "student",
+        "text": "I guess it'd still kinda work since they're from the same class... but I feel like it's really only 'true' for the ones already counted in it."
+      },
+      {
+        "turn": 10,
+        "role": "examiner",
+        "text": "You mentioned the mean 'kinda works' for someone from the same class but feels only 'true' for the students already counted in it \\u2014 if the mean is supposed to be your best single guess for anyone in that class, does it matter whether their score was actually used to calculate it, or is the guess based on something else, like what kind of class or group they belong to?",
+        "belief": "The student demonstrates that they do not know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      },
+      {
+        "turn": 11,
+        "role": "student",
+        "text": "Maybe it's more about the group they belong to... but I still feel like it's tied to those exact numbers somehow, like it wouldn't be as \"right\" for someone new."
+      },
+      {
+        "turn": 11,
+        "role": "examiner",
+        "text": "Thank you for walking through all of that with me -- that concludes our conversation today.",
+        "belief": "The student demonstrates that they do not know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3"
+        ]
+      }
+    ]
+  }
+]

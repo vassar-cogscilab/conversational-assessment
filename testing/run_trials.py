@@ -54,10 +54,6 @@ INITIAL_MESSAGE = (
 )
 
 PERSONAS = {
-    "poor_brief": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "poor_brief_student_claude.txt", "expected": "Poor"},
-    "poor_right": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "poor_right_student_claude.txt", "expected": "Poor"},
-    "high_brief": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "high_brief_student_claude.txt", "expected": "High"},
-    "high_right": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "high_right_student_claude.txt", "expected": "High"},
     "ccode_poor_brief": {"file": CCODE_STUDENT_PROMPTS_DIR / "poor_brief_student_ccode.txt", "expected": "Poor"},
     "ccode_poor_right": {"file": CCODE_STUDENT_PROMPTS_DIR / "poor_right_student_ccode.txt", "expected": "Poor"},
     "ccode_high_brief": {"file": CCODE_STUDENT_PROMPTS_DIR / "high_brief_student_ccode.txt", "expected": "High"},
@@ -70,18 +66,10 @@ EXAMINER_SCHEMA = {
     "properties": {
         "target_concept": {
             "type": "string", "enum": ["1", "2", "3", "4"],
-            "description": (
-                "The concept under <Understand_the_mean_as_a_model> that the NEW `question` "
-                "you're asking this turn is about — not the concept concept_judgment refers to."
-            ),
         },
         "target_misconceptions": {"type": "array", "items": {"type": "string"}},
         "concept_judgment": {
             "type": "string", "enum": ["know", "unclear", "do_not_know"],
-            "description": (
-                "Your step 3 judgment about the concept you were testing LAST turn (i.e. last "
-                "turn's target_concept, not this turn's) — the student's reply just answered it."
-            ),
         },
         "explanation": {"type": "string"},
         "conversation_state": {"type": "string", "enum": ["ongoing", "finished"]},
@@ -245,12 +233,12 @@ def run_trial_safe(persona_name, student_prompt, examiner_prompt, trial_index) -
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--trials", type=int, default=1, help="Trials to run per persona (default: 1)")
-    parser.add_argument("--personas", nargs="+", choices=list(PERSONAS), default=["ccode_poor_brief"],
-                         help="Which personas to test (default: ccode_poor_brief)")
-    parser.add_argument("--workers", type=int, default=1,
-                         help="Concurrent trials to run at once (default: 1 — sequential; raising this sends more "
+    parser.add_argument("--personas", nargs="+", choices=list(PERSONAS), default=list(PERSONAS),
+                         help="Which personas to test (default: all)")
+    parser.add_argument("--workers", type=int, default=3,
+                         help="Concurrent trials to run at once (default: 3 — sequential; raising this sends more "
                               "concurrent requests to your local Ollama server and the Anthropic API)")
-    parser.add_argument("--out", default=str(TESTING_DIR / "3_results.json"),
+    parser.add_argument("--out", default=str(TESTING_DIR / "6_results.json"),
                          help="Path to write full results/transcripts JSON")
     args = parser.parse_args()
 
