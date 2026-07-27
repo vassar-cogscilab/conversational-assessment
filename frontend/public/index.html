@@ -1,41 +1,35 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Conversational Assessment</title>
-    <style>
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        max-width: 40rem;
-        margin: 4rem auto;
-        padding: 0 1rem;
-        line-height: 1.5;
-        color: #1a1a1a;
-      }
-      code { background: #f0f0f0; padding: 0.1em 0.3em; border-radius: 3px; }
-      #status { font-weight: 600; }
-    </style>
-  </head>
-  <body>
-    <h1>Conversational Assessment</h1>
-    <p>Frontend placeholder — served as static files from <code>/convo/</code>.</p>
-    <p>Backend health check: <span id="status">checking…</span></p>
-
-    <script>
-      // Relative path resolves to /convo/api/health behind Apache.
-      fetch('api/health')
-        .then((r) => r.json())
-        .then((d) => {
-          document.getElementById('status').textContent = d.ok
-            ? 'OK ✓ (' + d.service + ')'
-            : 'unexpected response';
-        })
-        .catch(() => {
-          document.getElementById('status').textContent = 'unreachable ✗';
-        });
-    </script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CourseKata AI</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="header-left">
+        <h1>{KATALM}</h1>
+      </div>
+      <div class="header-right">
+        <a id="student-press">Student</a>
+        <a id="instructor-press" href="instructor.html" target="_blank">Instructor</a>
+      </div>
+    </header>
+    <section id="chat"></section>
+    <div id="instructor-panel" hidden>
+      <h2>Instructor View</h2>
+      <div id="summary-content">Submit a student response to see the evaluation summary.</div>
+    </div>
+    <form id="form">
+      <textarea id="input" placeholder="Type your answer here..." name="input"></textarea>
+      <button type="submit" id="submit-btn">Submit</button>
+      <button id="clear-btn">New Chat</button>
+    </form>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
 </html>
-
 

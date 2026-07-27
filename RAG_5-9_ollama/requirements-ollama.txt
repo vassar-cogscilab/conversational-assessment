@@ -1,0 +1,9 @@
+# Extra dependency for this Ollama-based variant of RAG_5-9, on top of
+# whatever's already in backend/requirements.txt (Flask, anthropic, numpy,
+# etc. — this folder's database_engine.py still needs those). Not merged
+# into backend/requirements.txt because this path isn't used by the live
+# backend/deploy, which embeds via Voyage AI (see ../RAG_5-9).
+#
+#   venv/bin/pip install -r RAG_5-9_ollama/requirements-ollama.txt
+#
+ollama==0.6.2

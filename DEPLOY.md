@@ -59,6 +59,7 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 | `EC2_USER` | `ec2-user` |
 | `EC2_SSH_KEY` | A private SSH key whose public half is in `~ec2-user/.ssh/authorized_keys` |
 | `LLM_API_KEY` | Anthropic API key. The deploy writes it to `~/convo-api/.env` as `ANTHROPIC_API_KEY` (mode 600). |
+| `VOYAGE_API_KEY` | Voyage AI key for RAG embeddings (`RAG_5-9/database_engine.py`). Written to the same `.env` as `VOYAGE_API_KEY`. Get one at dash.voyageai.com — free for this project's volume. |
 
 **Recommended:** generate a dedicated deploy key rather than reusing the instance
 `.pem`, so it can be rotated/revoked independently:
@@ -79,7 +80,9 @@ On push to `main`, the workflow:
 2. (Optional, currently disabled) builds the frontend — see below.
 3. `rsync`s `frontend/public/` → `/var/www/html/convo/` (`--delete`).
 4. `rsync`s `backend/` → `~/convo-api/` (excludes `venv`, `__pycache__`, `.env`).
-5. SSHes in, creates the `venv` if missing, `pip install`s
+5. `rsync`s `RAG_5-9/` → `~/RAG_5-9/` — a sibling of `~/convo-api/`, mirroring
+   `RAG_5-9` living alongside `backend/` in the repo.
+6. SSHes in, creates the `venv` if missing, `pip install`s
    `requirements.txt` into it, then runs
    `pm2 startOrReload ecosystem.config.js` and `pm2 save`.
 

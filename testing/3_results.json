@@ -1,0 +1,119 @@
+[
+  {
+    "persona": "ccode_poor_brief",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "High",
+    "correct": false,
+    "turns_used": 6,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "The mean is like a stand-in guess for every data point, instead of using the actual numbers you just use the mean for all of them."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "If you used the mean as your stand-in guess for, say, how long people's thumbs are, and then compared that guess to someone's actual thumb length, how would you describe the relationship between their actual thumb length, your guess, and whatever is left over?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "judged_concept": "1",
+        "target_concept": "2",
+        "target_misconceptions": [
+          "2.1",
+          "2.2",
+          "2.3"
+        ]
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "Actual thumb length minus the mean gives you whatever's left over, the error."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "If someone's actual thumb length turns out to be shorter than your mean guess, would you say something went wrong with your model, or is that just an expected part of using the mean as a guess?",
+        "belief": "The student demonstrates that they know concept 2.",
+        "judged_concept": "2",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.1",
+          "3.2",
+          "3.3"
+        ]
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "Kind of feels like something went wrong, since the guess wasn't right for them."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "Suppose you used the mean thumb length to guess for everyone in a whole room of people. Do you think it would be possible for your guess to perfectly match every single person's actual thumb length, or is some mismatch unavoidable no matter how you guess?",
+        "belief": "The student demonstrates that they do not know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "3",
+        "target_misconceptions": [
+          "3.1",
+          "3.2"
+        ]
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "Some mismatch is unavoidable, people's thumbs are all different so one number can't match everyone."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "If a new person walked into that same room and you hadn't measured their thumb yet, could you already make a guess about their thumb length using that same mean, before ever measuring them?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "judged_concept": "3",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.1",
+          "4.2",
+          "4.3"
+        ]
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "I guess... maybe? But that mean was calculated from the people already measured, so I'm not sure it applies to someone new."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "Let's think about it this way: if you measured 100 people's thumbs and calculated the mean, and then a 101st person walked in whose thumb you hadn't measured yet, what's the most reasonable prediction you could make for their thumb length, and why would that number make sense as a prediction rather than just a description of the first 100 people?",
+        "belief": "I cannot tell from the student's response whether they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": [
+          "4.3",
+          "4.1"
+        ]
+      },
+      {
+        "turn": 6,
+        "role": "student",
+        "text": "I'd probably still say the mean, since it's the best guess we have even without knowing their actual thumb."
+      },
+      {
+        "turn": 6,
+        "role": "examiner",
+        "text": "Thank you for walking through all of that with me — that gives me a clear picture of how you think about the mean as a model, error, and prediction. This concludes our conversation!",
+        "belief": "The student demonstrates that they know concept 4.",
+        "judged_concept": "4",
+        "target_concept": "4",
+        "target_misconceptions": []
+      }
+    ]
+  }
+]

@@ -16,7 +16,10 @@ module.exports = {
       // with node. gunicorn loads the Flask app object `app` from app.py and
       // binds to localhost only — public traffic must come through Apache.
       interpreter: 'none',
-      args: 'app:app --bind 127.0.0.1:3001 --workers 2',
+      // Single worker: sessions.json is a plain file written from an
+      // in-memory dict, not a shared store — a second worker would keep its
+      // own copy and the two would clobber each other's writes.
+      args: 'app:app --bind 127.0.0.1:3001 --workers 1',
       cwd: '/home/ec2-user/convo-api',
       // Single fork process so a failed start can't hang a deploy's reload.
       exec_mode: 'fork',

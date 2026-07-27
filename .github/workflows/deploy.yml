@@ -16,6 +16,9 @@ env:
   FRONTEND_SRC: frontend/public
   REMOTE_FRONTEND: /var/www/html/convo
   REMOTE_BACKEND: /home/ec2-user/convo-api
+  # Sibling of REMOTE_BACKEND, mirroring RAG_5-9 living alongside backend/ in
+  # the repo (backend/app.py resolves it via BASE_DIR.parent / "RAG_5-9").
+  REMOTE_RAG: /home/ec2-user/RAG_5-9
 
 jobs:
   deploy:
@@ -54,9 +57,18 @@ jobs:
         run: |
           rsync -az --delete \
             --exclude venv --exclude __pycache__ --exclude '*.pyc' --exclude .env \
+            --exclude sessions.json \
             -e "ssh -i ~/.ssh/deploy_key" \
             backend/ \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${REMOTE_BACKEND}/"
+
+      - name: Deploy RAG corpus/engine
+        run: |
+          rsync -az --delete \
+            --exclude __pycache__ --exclude '*.pyc' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            RAG_5-9/ \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${REMOTE_RAG}/"
 
       - name: Write backend .env on server
         env:
@@ -64,14 +76,27 @@ jobs:
           # the Anthropic SDK reads by default). Add more vars to the heredoc
           # below as the backend grows.
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          # RAG embeddings (RAG_5-9/database_engine.py) via Voyage AI.
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+          # Shared secret for the /admin/sessions endpoints (app.py).
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
           if [ -z "$LLM_API_KEY" ]; then
             echo "::warning::LLM_API_KEY secret is empty; leaving existing .env untouched"
             exit 0
           fi
-          # Pipe over stdin (key never appears in argv) and create with umask 077 (file mode 600).
-          printf 'ANTHROPIC_API_KEY=%s\n' "$LLM_API_KEY" \
-            | ssh -i ~/.ssh/deploy_key \
+          if [ -z "$VOYAGE_API_KEY" ]; then
+            echo "::warning::VOYAGE_API_KEY secret is empty; RAG embeddings will fail until it's set"
+          fi
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "::warning::ADMIN_TOKEN secret is empty; /admin/sessions will be unauthenticated until it's set"
+          fi
+          # Pipe over stdin (keys never appear in argv) and create with umask 077 (file mode 600).
+          {
+            printf 'ANTHROPIC_API_KEY=%s\n' "$LLM_API_KEY"
+            [ -n "$VOYAGE_API_KEY" ] && printf 'VOYAGE_API_KEY=%s\n' "$VOYAGE_API_KEY"
+            [ -n "$ADMIN_TOKEN" ] && printf 'ADMIN_TOKEN=%s\n' "$ADMIN_TOKEN"
+          } | ssh -i ~/.ssh/deploy_key \
                 "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
                 "umask 077 && cat > '${REMOTE_BACKEND}/.env'"
 
