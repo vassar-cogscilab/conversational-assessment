@@ -16,14 +16,15 @@ app.secret_key = secrets.token_hex(32)
 client = anthropic.Anthropic()
 
 BASE_DIR = Path(__file__).resolve().parent
+RAG_DIR = BASE_DIR.parent / "RAG_5-9"
 
 with open(BASE_DIR / "examiner_prompt.txt", encoding="utf-8") as f:
     examiner_prompt = f.read()
 
-sys.path.insert(0, str(BASE_DIR / "RAG_5-9"))
+sys.path.insert(0, str(RAG_DIR))
 from database_engine import ContextualVectorDB
 
-RAG_DB_PATH = str(BASE_DIR / "RAG_5-9" / "data" / "my_contextual_db" / "contextual_vector_db.pkl")
+RAG_DB_PATH = str(RAG_DIR / "data" / "my_contextual_db" / "contextual_vector_db.pkl")
 rag_db = ContextualVectorDB("my_contextual_db", db_path=RAG_DB_PATH)
 rag_db.load_db()
 
@@ -47,6 +48,9 @@ def save_sessions():
         json.dump(sessions, f, ensure_ascii=False, indent=2)
 
 INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+# INITIAL_MESSAGE targets concept 1 ("Understand what a model is and the mean
+# as a model") — it's the only question not produced by the examiner itself,
+# so there's no parsed["target_concept"] to seed current_target_concept from.
 
 # Conversation starter so the model sees the initial question in its history
 BASE_MESSAGES = [
@@ -115,48 +119,58 @@ def call_claude(messages, prompt, rag_context=None, output_schema=None):
     thinking = next((block.thinking for block in response.content if block.type == "thinking"), "")
     return text, thinking
 
-
-# Enforced by output_config.format on the examiner call (see call_claude) —
-# fields mirror exactly what examiner_prompt.txt's own <conversation_examples>
-# already produce as prose (Belief / Conversation state / Understanding of the
-# mean as a model / Question), plus per-turn admin-visible bookkeeping
-# (target_concept, target_misconceptions, explanation) grounded in the
-# prompt's own <Understand_the_mean_as_a_model> and <misconceptions>
-# sections. There is no "reasoning" field here — that's sourced from the
-# model's actual adaptive thinking output (see call_claude), not a
-# self-reported schema field. "explanation" is separate from "reasoning": it's
-# the model's stated justification for `belief` (comparison to the ideal
-# response, misconceptions per <task> step 3), kept out of `belief` itself so
-# `belief` can stay the terse cumulative status line the examples show.
 MAX_TURNS = 12
 
 EXAMINER_SCHEMA = {
     "type": "object",
     "properties": {
-        "target_concept": {"type": "string", "enum": ["1", "2", "3", "4"]},
+        "target_concept": {
+            "type": "string", "enum": ["1", "2", "3", "4"],
+            "description": (
+                "The concept under <Understand_the_mean_as_a_model> that the NEW `question` "
+                "you're asking this turn is about — not the concept concept_judgment refers to."
+            ),
+        },
         "target_misconceptions": {"type": "array", "items": {"type": "string"}},
-        "belief": {"type": "string"},
+        "concept_judgment": {
+            "type": "string", "enum": ["know", "unclear", "do_not_know"],
+            "description": (
+                "Your step 3 judgment about the concept you were testing LAST turn (i.e. last "
+                "turn's target_concept, not this turn's) — the student's reply just answered it."
+            ),
+        },
         "explanation": {"type": "string"},
         "conversation_state": {"type": "string", "enum": ["ongoing", "finished"]},
         "understanding_of_mean_as_model": {"type": "string", "enum": ["Pending", "Poor", "High"]},
         "question": {"type": "string"},
     },
     "required": [
-        "target_concept", "target_misconceptions", "belief", "explanation",
+        "target_concept", "target_misconceptions", "concept_judgment", "explanation",
         "conversation_state", "understanding_of_mean_as_model", "question",
     ],
     "additionalProperties": False,
 }
 
+BELIEF_TEMPLATES = {
+    "know": "The student demonstrates that they know concept {n}.",
+    "unclear": "I cannot tell from the student's response whether they know concept {n}.",
+    "do_not_know": "The student demonstrates that they do not know concept {n}.",
+}
 
-def format_examiner_turn(parsed: dict) -> str:
+
+def belief_line(concept_judgment: str, judged_concept: str) -> str:
+
+    return BELIEF_TEMPLATES[concept_judgment].format(n=judged_concept)
+
+
+def format_examiner_turn(parsed: dict, judged_concept: str) -> str:
     # Re-render the structured output as the plain-text shape examiner_prompt.txt's
     # own <conversation_examples> use, so each turn keeps pattern-matching against
     # its own few-shot history. reasoning/target_concept/target_misconceptions/
     # explanation are deliberately left out of what gets replayed — they're
     # admin-only bookkeeping (see turn_log in /string), not part of the few-shot
-    # pattern, and keeping them out is what lets `belief` stay terse.
-    lines = [f"Belief: {parsed['belief']}"]
+    # pattern, and keeping them out is what lets the belief line stay terse.
+    lines = [f"Belief: {belief_line(parsed['concept_judgment'], judged_concept)}"]
     if parsed["conversation_state"] == "finished":
         lines.append("Conversation state: finished")
         lines.append(f"Understanding of the mean as a model: {parsed['understanding_of_mean_as_model']}")
@@ -188,6 +202,7 @@ def new_chat():
         "messages": list(BASE_MESSAGES),
         "turns": 0,
         "current_question": INITIAL_MESSAGE,
+        "current_target_concept": "1",
         "rag_contexts": [],
         "turn_log": [],
     }
@@ -206,6 +221,8 @@ def get_string():
 
     session = sessions[session_id]
 
+    judged_concept = session.get("current_target_concept", "1")
+
     rag_blocks = get_rag_context(user_input)
     session["rag_contexts"].append(rag_blocks)
     rag_context = render_rag_blocks(rag_blocks)
@@ -219,11 +236,14 @@ def get_string():
 
     session.setdefault("turn_log", []).append({
         "reasoning": thinking,
-        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "belief", "explanation")},
+        "belief": belief_line(parsed["concept_judgment"], judged_concept),
+        "judged_concept": judged_concept,
+        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "concept_judgment", "explanation")},
     })
 
-    session["messages"].append({"role": "assistant", "content": format_examiner_turn(parsed)})
+    session["messages"].append({"role": "assistant", "content": format_examiner_turn(parsed, judged_concept)})
     session["current_question"] = parsed["question"]
+    session["current_target_concept"] = parsed["target_concept"]
     session["turns"] += 1
 
     finished = parsed["conversation_state"] == "finished" or session["turns"] >= MAX_TURNS

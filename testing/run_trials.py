@@ -1,10 +1,10 @@
 """
 Runs simulated oral-exam conversations between the examiner bot
-(backend/examiner_prompt.txt) and a student bot (one of the
-*_student_ccode.txt personas), then reports what understanding level
-the examiner concluded for each trial: High, Poor, or Undetermined
-(conversation hit the turn limit without the examiner committing to
-Poor or High).
+(backend/examiner_prompt.txt) and a student bot (one of the four
+testing/claude_student_prompts personas), then reports what
+understanding level the examiner concluded for each trial: High,
+Poor, or Undetermined (conversation hit the turn limit without the
+examiner committing to Poor or High).
 
 Mirrors backend/app.py's call shape (model, thinking config, RAG
 lookup, structured output schema, turn-limit logic) so results reflect
@@ -25,12 +25,25 @@ from pathlib import Path
 from dotenv import load_dotenv
 import anthropic
 
-ROOT_DIR = Path(__file__).resolve().parent
+TESTING_DIR = Path(__file__).resolve().parent
+ROOT_DIR = TESTING_DIR.parent
 BACKEND_DIR = ROOT_DIR / "backend"
+CLAUDE_STUDENT_PROMPTS_DIR = TESTING_DIR / "claude_student_prompts"
+CCODE_STUDENT_PROMPTS_DIR = TESTING_DIR / "ccode_student_prompts"
 
-load_dotenv(BACKEND_DIR / ".env")
 
-sys.path.insert(0, str(BACKEND_DIR / "RAG_5-9"))
+# API keys live in testing/.env — kept out of git by the repo-wide .env
+# rule in .gitignore. Needs ANTHROPIC_API_KEY. (RAG_5-9_ollama's
+# database_engine.py embeds via a local Ollama server, not a cloud API key
+# — see RAG_5-9_ollama/README.md for setup.)
+load_dotenv(TESTING_DIR / ".env")
+
+# RAG_5-9_ollama, not RAG_5-9 — this trial harness embeds via a local Ollama
+# server (nomic-embed-text) instead of the Voyage AI cloud API the live
+# backend uses. Requires `ollama serve` running locally with that model
+# pulled (`ollama pull nomic-embed-text`) — see RAG_5-9_ollama/README.md.
+RAG_DIR = ROOT_DIR / "RAG_5-9_ollama"
+sys.path.insert(0, str(RAG_DIR))
 from database_engine import ContextualVectorDB  # noqa: E402
 
 MODEL = "claude-sonnet-5"
@@ -41,34 +54,66 @@ INITIAL_MESSAGE = (
 )
 
 PERSONAS = {
-    "poor_brief": {"file": ROOT_DIR / "poor_brief_student_ccode.txt", "expected": "Poor"},
-    "high_right": {"file": ROOT_DIR / "high_right_student_ccode.txt", "expected": "High"},
+    "poor_brief": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "poor_brief_student_claude.txt", "expected": "Poor"},
+    "poor_right": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "poor_right_student_claude.txt", "expected": "Poor"},
+    "high_brief": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "high_brief_student_claude.txt", "expected": "High"},
+    "high_right": {"file": CLAUDE_STUDENT_PROMPTS_DIR / "high_right_student_claude.txt", "expected": "High"},
+    "ccode_poor_brief": {"file": CCODE_STUDENT_PROMPTS_DIR / "poor_brief_student_ccode.txt", "expected": "Poor"},
+    "ccode_poor_right": {"file": CCODE_STUDENT_PROMPTS_DIR / "poor_right_student_ccode.txt", "expected": "Poor"},
+    "ccode_high_brief": {"file": CCODE_STUDENT_PROMPTS_DIR / "high_brief_student_ccode.txt", "expected": "High"},
+    "ccode_high_right": {"file": CCODE_STUDENT_PROMPTS_DIR / "high_right_student_ccode.txt", "expected": "High"},
 }
 
 # Same shape as backend/app.py's EXAMINER_SCHEMA — keep in sync with it.
 EXAMINER_SCHEMA = {
     "type": "object",
     "properties": {
-        "target_concept": {"type": "string", "enum": ["1", "2", "3", "4"]},
+        "target_concept": {
+            "type": "string", "enum": ["1", "2", "3", "4"],
+            "description": (
+                "The concept under <Understand_the_mean_as_a_model> that the NEW `question` "
+                "you're asking this turn is about — not the concept concept_judgment refers to."
+            ),
+        },
         "target_misconceptions": {"type": "array", "items": {"type": "string"}},
-        "belief": {"type": "string"},
+        "concept_judgment": {
+            "type": "string", "enum": ["know", "unclear", "do_not_know"],
+            "description": (
+                "Your step 3 judgment about the concept you were testing LAST turn (i.e. last "
+                "turn's target_concept, not this turn's) — the student's reply just answered it."
+            ),
+        },
         "explanation": {"type": "string"},
         "conversation_state": {"type": "string", "enum": ["ongoing", "finished"]},
         "understanding_of_mean_as_model": {"type": "string", "enum": ["Pending", "Poor", "High"]},
         "question": {"type": "string"},
     },
     "required": [
-        "target_concept", "target_misconceptions", "belief", "explanation",
+        "target_concept", "target_misconceptions", "concept_judgment", "explanation",
         "conversation_state", "understanding_of_mean_as_model", "question",
     ],
     "additionalProperties": False,
 }
 
+# Same mapping as backend/app.py's BELIEF_TEMPLATES — keep in sync with it.
+BELIEF_TEMPLATES = {
+    "know": "The student demonstrates that they know concept {n}.",
+    "unclear": "I cannot tell from the student's response whether they know concept {n}.",
+    "do_not_know": "The student demonstrates that they do not know concept {n}.",
+}
+
+
+def belief_line(concept_judgment: str, judged_concept: str) -> str:
+    # judged_concept is the concept of the question just answered (last
+    # turn's target_concept), not this turn's parsed["target_concept"] (the
+    # concept of the new question this turn is asking) — see run_trial.
+    return BELIEF_TEMPLATES[concept_judgment].format(n=judged_concept)
+
 client = anthropic.Anthropic()
 
 rag_db = ContextualVectorDB(
     "my_contextual_db",
-    db_path=str(BACKEND_DIR / "RAG_5-9" / "data" / "my_contextual_db" / "contextual_vector_db.pkl"),
+    db_path=str(RAG_DIR / "data" / "my_contextual_db" / "contextual_vector_db.pkl"),
 )
 rag_db.load_db()
 
@@ -116,8 +161,8 @@ def call_claude(messages, prompt, rag_context=None, output_schema=None, max_toke
     return next(block.text for block in response.content if block.type == "text")
 
 
-def format_examiner_turn(parsed: dict) -> str:
-    lines = [f"Belief: {parsed['belief']}"]
+def format_examiner_turn(parsed: dict, judged_concept: str) -> str:
+    lines = [f"Belief: {belief_line(parsed['concept_judgment'], judged_concept)}"]
     if parsed["conversation_state"] == "finished":
         lines.append("Conversation state: finished")
         lines.append(f"Understanding of the mean as a model: {parsed['understanding_of_mean_as_model']}")
@@ -129,6 +174,8 @@ def run_trial(persona_name: str, student_prompt: str, examiner_prompt: str, tria
     examiner_messages = [{"role": "assistant", "content": INITIAL_MESSAGE}]
     student_messages = [{"role": "user", "content": INITIAL_MESSAGE}]
     current_question = INITIAL_MESSAGE
+    # INITIAL_MESSAGE targets concept 1 (see backend/app.py's identical comment).
+    current_target_concept = "1"
     transcript = [{"turn": 0, "role": "examiner", "text": INITIAL_MESSAGE}]
     guess = "Undetermined"
     turns_used = 0
@@ -145,13 +192,14 @@ def run_trial(persona_name: str, student_prompt: str, examiner_prompt: str, tria
         examiner_messages.append({"role": "user", "content": student_answer})
         raw = call_claude(examiner_messages, examiner_prompt, rag_context=examiner_rag, output_schema=EXAMINER_SCHEMA)
         parsed = json.loads(raw)
-        examiner_messages.append({"role": "assistant", "content": format_examiner_turn(parsed)})
+        examiner_messages.append({"role": "assistant", "content": format_examiner_turn(parsed, current_target_concept)})
 
         transcript.append({
             "turn": turn,
             "role": "examiner",
             "text": parsed["question"],
-            "belief": parsed["belief"],
+            "belief": belief_line(parsed["concept_judgment"], current_target_concept),
+            "judged_concept": current_target_concept,
             "target_concept": parsed["target_concept"],
             "target_misconceptions": parsed["target_misconceptions"],
         })
@@ -163,6 +211,7 @@ def run_trial(persona_name: str, student_prompt: str, examiner_prompt: str, tria
             break
 
         current_question = parsed["question"]
+        current_target_concept = parsed["target_concept"]
         student_messages.append({"role": "user", "content": current_question})
 
     return {
@@ -195,11 +244,14 @@ def run_trial_safe(persona_name, student_prompt, examiner_prompt, trial_index) -
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--trials", type=int, default=3, help="Trials to run per persona (default: 3)")
-    parser.add_argument("--personas", nargs="+", choices=list(PERSONAS), default=list(PERSONAS),
-                         help="Which personas to test (default: all)")
-    parser.add_argument("--workers", type=int, default=4, help="Concurrent trials to run at once (default: 4)")
-    parser.add_argument("--out", default="trial_results.json", help="Path to write full results/transcripts JSON")
+    parser.add_argument("--trials", type=int, default=1, help="Trials to run per persona (default: 1)")
+    parser.add_argument("--personas", nargs="+", choices=list(PERSONAS), default=["ccode_poor_brief"],
+                         help="Which personas to test (default: ccode_poor_brief)")
+    parser.add_argument("--workers", type=int, default=1,
+                         help="Concurrent trials to run at once (default: 1 — sequential; raising this sends more "
+                              "concurrent requests to your local Ollama server and the Anthropic API)")
+    parser.add_argument("--out", default=str(TESTING_DIR / "3_results.json"),
+                         help="Path to write full results/transcripts JSON")
     args = parser.parse_args()
 
     with open(BACKEND_DIR / "examiner_prompt.txt", encoding="utf-8") as f:

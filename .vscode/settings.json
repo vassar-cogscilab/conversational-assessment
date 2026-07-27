@@ -1,7 +1,7 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/backend/venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
   "python.analysis.extraPaths": [
-    "${workspaceFolder}/backend/RAG_5-9"
+    "${workspaceFolder}/RAG_5-9"
   ],
   "python-envs.defaultEnvManager": "ms-python.python:system"
 }
