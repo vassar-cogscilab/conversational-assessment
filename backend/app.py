@@ -121,8 +121,10 @@ MAX_TURNS = 12
 EXAMINER_SCHEMA = {
     "type": "object",
     "properties": {
-        "target_concept": {
-            "type": "string", "enum": ["1", "2", "3", "4"],
+        "relevant_concepts": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["1", "2", "3", "4"]},
+            "minItems": 1,
         },
         "target_misconceptions": {"type": "array", "items": {"type": "string"}},
         "concept_judgment": {
@@ -133,26 +135,36 @@ EXAMINER_SCHEMA = {
         "question": {"type": "string"},
     },
     "required": [
-        "target_concept", "target_misconceptions", "concept_judgment",
+        "relevant_concepts", "target_misconceptions", "concept_judgment",
         "conversation_state", "understanding_of_mean_as_model", "question",
     ],
     "additionalProperties": False,
 }
 
 BELIEF_TEMPLATES = {
-    "know": "The student demonstrates that they know concept {n}.",
-    "unclear": "I cannot tell from the student's response whether they know concept {n}.",
-    "do_not_know": "The student demonstrates that they do not know concept {n}.",
+    "know": "The student demonstrates that they know {phrase}.",
+    "unclear": "I cannot tell from the student's response whether they know {phrase}.",
+    "do_not_know": "The student demonstrates that they do not know {phrase}.",
 }
 
 
-def belief_line(concept_judgment: str, judged_concept: str) -> str:
+def concept_phrase(concepts: list[str]) -> str:
+    # "concept 1" for one, "concepts 1 and 4" for two, "concepts 1, 2, and 4"
+    # for more — matches examiner_prompt.txt's own <conversation_examples>
+    # (e.g. "whether they know concepts 1 and 4").
+    if len(concepts) == 1:
+        return f"concept {concepts[0]}"
+    if len(concepts) == 2:
+        return f"concepts {concepts[0]} and {concepts[1]}"
+    return "concepts " + ", ".join(concepts[:-1]) + f", and {concepts[-1]}"
 
-    return BELIEF_TEMPLATES[concept_judgment].format(n=judged_concept)
+
+def belief_line(concept_judgment: str, relevant_concepts: list[str]) -> str:
+    return BELIEF_TEMPLATES[concept_judgment].format(phrase=concept_phrase(relevant_concepts))
 
 
-def format_examiner_turn(parsed: dict, judged_concept: str) -> str:
-    lines = [f"Belief: {belief_line(parsed['concept_judgment'], judged_concept)}"]
+def format_examiner_turn(parsed: dict) -> str:
+    lines = [f"Belief: {belief_line(parsed['concept_judgment'], parsed['relevant_concepts'])}"]
     if parsed["conversation_state"] == "finished":
         lines.append("Conversation state: finished")
         lines.append(f"Understanding of the mean as a model: {parsed['understanding_of_mean_as_model']}")
@@ -184,7 +196,6 @@ def new_chat():
         "messages": list(BASE_MESSAGES),
         "turns": 0,
         "current_question": INITIAL_MESSAGE,
-        "current_target_concept": "1",
         "rag_contexts": [],
         "turn_log": [],
     }
@@ -203,8 +214,6 @@ def get_string():
 
     session = sessions[session_id]
 
-    judged_concept = session.get("current_target_concept", "1")
-
     rag_blocks = get_rag_context(user_input)
     session["rag_contexts"].append(rag_blocks)
     rag_context = render_rag_blocks(rag_blocks)
@@ -219,14 +228,12 @@ def get_string():
 
     session.setdefault("turn_log", []).append({
         "reasoning": thinking,
-        "belief": belief_line(parsed["concept_judgment"], judged_concept),
-        "judged_concept": judged_concept,
-        **{k: parsed[k] for k in ("target_concept", "target_misconceptions", "concept_judgment",)},
+        "belief": belief_line(parsed["concept_judgment"], parsed["relevant_concepts"]),
+        **{k: parsed[k] for k in ("relevant_concepts", "target_misconceptions", "concept_judgment")},
     })
 
-    session["messages"].append({"role": "assistant", "content": format_examiner_turn(parsed, judged_concept)})
+    session["messages"].append({"role": "assistant", "content": format_examiner_turn(parsed)})
     session["current_question"] = parsed["question"]
-    session["current_target_concept"] = parsed["target_concept"]
     session["turns"] += 1
 
     finished = parsed["conversation_state"] == "finished" or session["turns"] >= MAX_TURNS

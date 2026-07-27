@@ -64,20 +64,21 @@ PERSONAS = {
 EXAMINER_SCHEMA = {
     "type": "object",
     "properties": {
-        "target_concept": {
-            "type": "string", "enum": ["1", "2", "3", "4"],
+        "relevant_concepts": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["1", "2", "3", "4"]},
+            "minItems": 1,
         },
         "target_misconceptions": {"type": "array", "items": {"type": "string"}},
         "concept_judgment": {
             "type": "string", "enum": ["know", "unclear", "do_not_know"],
         },
-        "explanation": {"type": "string"},
         "conversation_state": {"type": "string", "enum": ["ongoing", "finished"]},
         "understanding_of_mean_as_model": {"type": "string", "enum": ["Pending", "Poor", "High"]},
         "question": {"type": "string"},
     },
     "required": [
-        "target_concept", "target_misconceptions", "concept_judgment", "explanation",
+        "relevant_concepts", "target_misconceptions", "concept_judgment",
         "conversation_state", "understanding_of_mean_as_model", "question",
     ],
     "additionalProperties": False,
@@ -85,17 +86,24 @@ EXAMINER_SCHEMA = {
 
 # Same mapping as backend/app.py's BELIEF_TEMPLATES — keep in sync with it.
 BELIEF_TEMPLATES = {
-    "know": "The student demonstrates that they know concept {n}.",
-    "unclear": "I cannot tell from the student's response whether they know concept {n}.",
-    "do_not_know": "The student demonstrates that they do not know concept {n}.",
+    "know": "The student demonstrates that they know {phrase}.",
+    "unclear": "I cannot tell from the student's response whether they know {phrase}.",
+    "do_not_know": "The student demonstrates that they do not know {phrase}.",
 }
 
 
-def belief_line(concept_judgment: str, judged_concept: str) -> str:
-    # judged_concept is the concept of the question just answered (last
-    # turn's target_concept), not this turn's parsed["target_concept"] (the
-    # concept of the new question this turn is asking) — see run_trial.
-    return BELIEF_TEMPLATES[concept_judgment].format(n=judged_concept)
+def concept_phrase(concepts: list[str]) -> str:
+    # "concept 1" for one, "concepts 1 and 4" for two, "concepts 1, 2, and 4"
+    # for more — same as backend/app.py's concept_phrase, keep in sync.
+    if len(concepts) == 1:
+        return f"concept {concepts[0]}"
+    if len(concepts) == 2:
+        return f"concepts {concepts[0]} and {concepts[1]}"
+    return "concepts " + ", ".join(concepts[:-1]) + f", and {concepts[-1]}"
+
+
+def belief_line(concept_judgment: str, relevant_concepts: list[str]) -> str:
+    return BELIEF_TEMPLATES[concept_judgment].format(phrase=concept_phrase(relevant_concepts))
 
 client = anthropic.Anthropic()
 
@@ -149,8 +157,8 @@ def call_claude(messages, prompt, rag_context=None, output_schema=None, max_toke
     return next(block.text for block in response.content if block.type == "text")
 
 
-def format_examiner_turn(parsed: dict, judged_concept: str) -> str:
-    lines = [f"Belief: {belief_line(parsed['concept_judgment'], judged_concept)}"]
+def format_examiner_turn(parsed: dict) -> str:
+    lines = [f"Belief: {belief_line(parsed['concept_judgment'], parsed['relevant_concepts'])}"]
     if parsed["conversation_state"] == "finished":
         lines.append("Conversation state: finished")
         lines.append(f"Understanding of the mean as a model: {parsed['understanding_of_mean_as_model']}")
@@ -162,8 +170,6 @@ def run_trial(persona_name: str, student_prompt: str, examiner_prompt: str, tria
     examiner_messages = [{"role": "assistant", "content": INITIAL_MESSAGE}]
     student_messages = [{"role": "user", "content": INITIAL_MESSAGE}]
     current_question = INITIAL_MESSAGE
-    # INITIAL_MESSAGE targets concept 1 (see backend/app.py's identical comment).
-    current_target_concept = "1"
     transcript = [{"turn": 0, "role": "examiner", "text": INITIAL_MESSAGE}]
     guess = "Undetermined"
     turns_used = 0
@@ -180,15 +186,14 @@ def run_trial(persona_name: str, student_prompt: str, examiner_prompt: str, tria
         examiner_messages.append({"role": "user", "content": student_answer})
         raw = call_claude(examiner_messages, examiner_prompt, rag_context=examiner_rag, output_schema=EXAMINER_SCHEMA)
         parsed = json.loads(raw)
-        examiner_messages.append({"role": "assistant", "content": format_examiner_turn(parsed, current_target_concept)})
+        examiner_messages.append({"role": "assistant", "content": format_examiner_turn(parsed)})
 
         transcript.append({
             "turn": turn,
             "role": "examiner",
             "text": parsed["question"],
-            "belief": belief_line(parsed["concept_judgment"], current_target_concept),
-            "judged_concept": current_target_concept,
-            "target_concept": parsed["target_concept"],
+            "belief": belief_line(parsed["concept_judgment"], parsed["relevant_concepts"]),
+            "relevant_concepts": parsed["relevant_concepts"],
             "target_misconceptions": parsed["target_misconceptions"],
         })
 
@@ -199,7 +204,6 @@ def run_trial(persona_name: str, student_prompt: str, examiner_prompt: str, tria
             break
 
         current_question = parsed["question"]
-        current_target_concept = parsed["target_concept"]
         student_messages.append({"role": "user", "content": current_question})
 
     return {
