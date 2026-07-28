@@ -60,6 +60,44 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 | `EC2_SSH_KEY` | A private SSH key whose public half is in `~ec2-user/.ssh/authorized_keys` |
 | `LLM_API_KEY` | Anthropic API key. The deploy writes it to `~/convo-api/.env` as `ANTHROPIC_API_KEY` (mode 600). |
 | `VOYAGE_API_KEY` | Voyage AI key for RAG embeddings (`RAG_5-9/database_engine.py`). Written to the same `.env` as `VOYAGE_API_KEY`. Get one at dash.voyageai.com — free for this project's volume. |
+| `ADMIN_TOKEN` | Shared secret for the `/convo/api/admin/sessions` endpoints. Written to the same `.env`. Generate with `python3 -c "import secrets; print(secrets.token_hex(32))"`. |
+
+### Repository variables (Settings → Secrets and variables → Actions → **Variables**)
+
+These are non-secret configuration, so they're variables rather than secrets —
+being able to read the current value back in the Actions UI is the point. All
+are optional; unset means the default in `backend/llm.py` applies.
+
+| Variable | Default | Value |
+| --- | --- | --- |
+| `LLM_BACKEND` | `anthropic` | `anthropic` or `ollama` — which backend the examiner calls. |
+| `OLLAMA_HOST` | `http://lambda-server:11434` | Ollama base URL. Plain `http://` is correct — `tailscale serve --tcp` is a raw TCP forwarder, so `https://` to this port fails. |
+| `OLLAMA_MODEL` | `gemma4:26b` | Model tag to run. |
+| `OLLAMA_NUM_CTX` | *(server default)* | Set to `32768` for `llama3.3:70b` — at the server's default 128K context it overflows VRAM, spills to CPU, and drops to ~2.4 tok/s. |
+| `OLLAMA_KEEP_ALIVE` | `-1` | How long Ollama keeps the model resident; `-1` never unloads, so the first student after an idle stretch doesn't pay a ~17 GB cold start. |
+
+> ⚠️ **The deploy rewrites `~/convo-api/.env` from scratch on every push.**
+> Editing `.env` over SSH works until the next deploy silently reverts it — an
+> `LLM_BACKEND` flipped by hand would quietly fall back to Anthropic. Change the
+> repository variable and re-run the deploy instead.
+
+**Switching the examiner to the self-hosted GPU box** requires the EC2 box to be
+on the Tailscale tailnet with `lambda-server` resolvable. Both nodes were
+brought up with `--accept-dns=false`, so MagicDNS names do **not** resolve; the
+EC2 box has an `/etc/hosts` entry mapping `lambda-server` to its tailnet IP.
+Verify before flipping the variable:
+
+```bash
+curl -s http://lambda-server:11434/v1/models | python3 -m json.tool
+```
+
+Confirm the switch took effect after the deploy — `/convo/api/health` reports
+the active backend and model:
+
+```bash
+curl -s https://cogsciresearch.vassar.edu/convo/api/health
+# {"ok":true,"service":"convo-api","backend":"ollama","model":"gemma4:26b",...}
+```
 
 **Recommended:** generate a dedicated deploy key rather than reusing the instance
 `.pem`, so it can be rotated/revoked independently:
