@@ -1,7 +1,7 @@
 """
 Runs simulated oral-exam conversations between the examiner bot
 (backend/examiner_prompt.txt) and a student bot (one of the four
-testing/claude_student_prompts personas), then reports what
+testing/ccode_student_prompts personas), then reports what
 understanding level the examiner concluded for each trial: High,
 Poor, or Undetermined (conversation hit the turn limit without the
 examiner committing to Poor or High).
