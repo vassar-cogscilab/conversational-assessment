@@ -253,13 +253,13 @@ def run_trial_safe(persona_name, student_prompt, examiner_prompt, trial_index) -
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--trials", type=int, default=1, help="Trials to run per persona (default: 1)")
+    parser.add_argument("--trials", type=int, default=10, help="Trials to run per persona (default: 1)")
     parser.add_argument("--personas", nargs="+", choices=list(PERSONAS), default=list(PERSONAS),
                          help="Which personas to test (default: all)")
     parser.add_argument("--workers", type=int, default=3,
                          help="Concurrent trials to run at once (default: 3 — sequential; raising this sends more "
                               "concurrent requests to your local Ollama server and the Anthropic API)")
-    parser.add_argument("--out", default=str(TESTING_DIR / "6_results.json"),
+    parser.add_argument("--out", default=str(TESTING_DIR / "10_results.json"),
                          help="Path to write full results/transcripts JSON")
     args = parser.parse_args()
 

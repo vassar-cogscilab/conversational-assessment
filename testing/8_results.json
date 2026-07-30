@@ -1,0 +1,386 @@
+[
+  {
+    "persona": "ccode_high_brief",
+    "trial_index": 1,
+    "expected": "High",
+    "guess": "High",
+    "correct": true,
+    "turns_used": 6,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "It gives one predicted value for every observation."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "You said it gives one predicted value for every observation. What is it about doing that, that would make you call the mean a model in the first place?",
+        "belief": "I cannot tell from the student's response whether they know concepts 1 and 4.",
+        "relevant_concepts": [
+          "1",
+          "4"
+        ],
+        "target_misconceptions": [
+          "1.3",
+          "1.4",
+          "4.2"
+        ]
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "It's a rule that generates a predicted score, which is all a model needs to be."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "Suppose a friend uses the mean of their monthly grocery spending to predict what they'll spend next month, but when the bill comes, it's a different amount. How would you describe the relationship between that actual bill, the predicted amount, and whatever difference shows up between them?",
+        "belief": "The student demonstrates that they know concepts 1 and 4.",
+        "relevant_concepts": [
+          "1",
+          "4"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "Actual bill equals the predicted mean plus error."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "That difference between the actual bill and the predicted mean will vary from month to month. Why do you think that difference exists at all, even though the mean was calculated from real spending data?",
+        "belief": "The student demonstrates that they know concept 2.",
+        "relevant_concepts": [
+          "2"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "Because grocery spending varies month to month, and one number can't capture every value exactly."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Suppose one month the actual bill comes in higher than the predicted mean, and another month it comes in lower. What, if anything, does that positive or negative difference tell you about those two months?",
+        "belief": "The student demonstrates that they know concepts 2 and 3.",
+        "relevant_concepts": [
+          "2",
+          "3"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "Just the direction — one month spent more than predicted, the other less. Not that either month was good or bad."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "If you added up all of those monthly differences between the actual bills and the predicted mean across an entire year, what would you expect to happen, and why?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "relevant_concepts": [
+          "3"
+        ],
+        "target_misconceptions": [
+          "3.3",
+          "3.4"
+        ]
+      },
+      {
+        "turn": 6,
+        "role": "student",
+        "text": "They'd add up to zero, because the mean is the balancing point of the data."
+      },
+      {
+        "turn": 6,
+        "role": "examiner",
+        "text": "That gives me a clear picture of how you understand the mean as a model, from prediction through error. Thank you for working through these questions with me — that concludes our conversation.",
+        "belief": "The student demonstrates that they know concept 3.",
+        "relevant_concepts": [
+          "3"
+        ],
+        "target_misconceptions": []
+      }
+    ]
+  },
+  {
+    "persona": "ccode_poor_brief",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "High",
+    "correct": false,
+    "turns_used": 5,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "The mean is a model because it's the number we use to predict every data point, even though it's not usually exactly right."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "Suppose a teacher records the exam scores for a class of 30 students and calculates the average score to use as her prediction for each student. If one particular student actually scored higher than that average, how would you describe or account for the difference between that student's actual score and the average?",
+        "belief": "The student demonstrates that they know concept 1.",
+        "relevant_concepts": [
+          "1"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "That'd be error — like the model didn't quite get that student right."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "When you say the model 'didn't quite get that student right,' what do you think that difference actually represents about the student's score compared to the model?",
+        "belief": "I cannot tell from the student's response whether they know concepts 2 and 3.",
+        "relevant_concepts": [
+          "2",
+          "3"
+        ],
+        "target_misconceptions": [
+          "3.1"
+        ]
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "Just that the student scored more than what the mean predicted for them."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "Suppose a new student later joins the class after the average was already calculated from the other 30 students. Could you say anything about what score to expect for this new student using that same average, and why or why not?",
+        "belief": "The student demonstrates that they know concepts 3 and 4.",
+        "relevant_concepts": [
+          "3",
+          "4"
+        ],
+        "target_misconceptions": [
+          "3.1",
+          "3.3"
+        ]
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "Yeah I guess you could still use that same average as your guess for the new student too."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Thinking about that same class average and how it relates to any individual student's actual score, how would you describe the relationship between the actual score, the average, and the error for a given student?",
+        "belief": "The student demonstrates that they know concept 4.",
+        "relevant_concepts": [
+          "4"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "The actual score equals the average plus whatever error that student has, like the leftover part not explained by the average."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "That concludes our conversation, thank you for participating!",
+        "belief": "The student demonstrates that they know concepts 2 and 3.",
+        "relevant_concepts": [
+          "2",
+          "3"
+        ],
+        "target_misconceptions": []
+      }
+    ]
+  },
+  {
+    "persona": "ccode_poor_right",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "Poor",
+    "correct": true,
+    "turns_used": 5,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "The mean is a model because it's basically the same idea as the median — it's one number that sits in the middle and stands in for every score in the distribution, so instead of looking at each individual data point, you just use that middle number to describe the whole group."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "You mentioned that the mean works the same way as the median in giving one number for every score—can you say more about how the mean specifically arrives at that one number it uses to represent the whole group?",
+        "belief": "I cannot tell from the student's response whether they know concepts 1 and 4.",
+        "relevant_concepts": [
+          "1",
+          "4"
+        ],
+        "target_misconceptions": [
+          "1.1 Student confuses the mean with median or mode."
+        ]
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "The mean is calculated by adding up all the numbers and dividing by how many there are, so with 5, 5, 5, 10, 20 you'd get 9 — and that 9 becomes the balancing point where the values below it even out with the values above it, kind of like the smaller numbers and bigger numbers cancel out around it."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "Suppose you use the class average on a test to guess how one particular student scored, but that student's actual score is not exactly the average. How would you describe the relationship between the student's real score, the average, and the gap between them?",
+        "belief": "The student demonstrates that they know concepts 1 and 3.",
+        "relevant_concepts": [
+          "1",
+          "3"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "I'd say the gap is basically an error or mistake in the model — like if the average was 80 and the student got 85, that 5-point gap means the model didn't quite work for that student, so something's a bit off there rather than that being a normal part of using the mean."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "You describe that 5-point gap as something being 'off' with the model. If you picked a different student from the same class, would you expect a gap like that to show up again, or is this gap something you'd expect to avoid with a properly working model?",
+        "belief": "I cannot tell from the student's response whether they know concepts 2 and 3.",
+        "relevant_concepts": [
+          "2",
+          "3"
+        ],
+        "target_misconceptions": [
+          "3.1",
+          "3.2"
+        ]
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "I think if the model were working properly, you'd want that gap to shrink or go away for most students, so seeing it pop up again for a different student would kind of mean the average still isn't doing a great job — like the model should be getting closer to everyone's actual score, not just leaving the same size gap over and over."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Let's set that gap issue aside for a second. Suppose a brand new student joins the class after the test average has already been calculated, and you use that same average to predict how they might have scored. How would that prediction compare to the predictions you made earlier for the other students in the class?",
+        "belief": "The student demonstrates that they do not know concepts 2 and 3.",
+        "relevant_concepts": [
+          "2",
+          "3"
+        ],
+        "target_misconceptions": [
+          "2.2",
+          "3.1",
+          "3.2"
+        ]
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "It would basically be a different prediction because that new student wasn't part of the original group the average came from, so the average doesn't really apply to them the same way it does to the students who were already counted in it."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "Thank you for walking through your thinking on this—that gives me a clear picture of how you're understanding the mean as a model, and that concludes our conversation today.",
+        "belief": "The student demonstrates that they do not know concept 4.",
+        "relevant_concepts": [
+          "4"
+        ],
+        "target_misconceptions": [
+          "4.1",
+          "4.3"
+        ]
+      }
+    ]
+  },
+  {
+    "persona": "ccode_high_right",
+    "trial_index": 1,
+    "expected": "High",
+    "guess": "High",
+    "correct": true,
+    "turns_used": 3,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "So thinking of the mean as a model means we're treating it as a prediction machine, basically — it's the number we'd guess for any observation if we didn't know anything else about that observation. Like, if I told you the mean test score in a class is 78, and then asked you to guess one particular student's score without giving you any other information, your best bet is to guess 78. That's the mean functioning as a model: it's generating a predicted value for every single data point in the distribution, not just describing the dataset as a whole after the fact.\n\nAnd that's actually a pretty different way of thinking about it than \"average\" in the everyday sense. In everyday language, average just feels like a summary — like a fact about the group. But as a model, it's doing something more active: it's standing in for every individual observation as its predicted score. So when we say DATA = MODEL + ERROR, and the model is the mean, we're literally saying that any given data point can be decomposed into two pieces — the mean itself, which is the model's prediction, and the residual, which is how far off that prediction was for that particular point. So if the mean is 9 and I observe a 20, the model says \"I predict 9,\" and the error is +11 — the gap between what was predicted and what actually happened.\n\nThe reason this matters is it lets us use the same number, the mean, on new data we haven't even seen yet — like predicting a future student's test score before they've taken the test — and not just as a backward-looking description of numbers we already have."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "You described the difference between the predicted value and the actual score as error, like the +11 in your example. Why do you think that gap exists in the first place, even when we use a model like the mean?",
+        "belief": "The student demonstrates that they know concepts 1, 2, and 4.",
+        "relevant_concepts": [
+          "1",
+          "2",
+          "4"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "That gap exists basically because a single number can never fully capture individual variability — it's not a flaw in the mean itself, it's just an inherent limitation of trying to summarize a whole distribution of different people or scores with one value. Think about it this way: if every student in a class studied the same amount, had the same background, same test anxiety, same sleep the night before, then sure, maybe they'd all score close to identical, and the mean would nail every prediction. But real data is messy — people differ from each other for tons of reasons we're not even measuring, whether that's natural ability, motivation, luck on that particular day, whatever. The mean is only using one piece of information, which is \"on average, where do these scores tend to sit,\" and it's throwing away all that individual-level detail.\n\nSo the error isn't a sign the model failed, it's really just a reflection of the fact that individuals vary, and a single-number model, by definition, treats everyone the same instead of accounting for those individual differences. That's actually why the whole framework is DATA = MODEL + ERROR rather than DATA = MODEL — the equation itself is telling us upfront to expect that leftover part. If we want to shrink that error, we'd need a more detailed model — like maybe using group membership, or study hours, or some other variable to make more tailored predictions instead of using the same single number for every observation. But even then, there'd almost certainly be some error left over, because you can pretty much never capture 100% of why people differ."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "You mentioned that error can be positive or negative, like the +11 gap you described earlier. If you imagine adding up the errors across every single observation in a dataset when using the mean as the model, what would you expect to happen to those positive and negative values, and why?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "relevant_concepts": [
+          "3"
+        ],
+        "target_misconceptions": [
+          "3.3",
+          "3.4"
+        ]
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "I'd expect those positive and negative errors to exactly cancel out and sum to zero. That's actually one of the defining properties of the mean — it's not just some arbitrary central number, it's specifically the value that balances out all the deviations above and below it.\n\nThink of it almost like a seesaw or a balance scale: the mean is the fulcrum point where the total distance of all the scores above it is exactly equal to the total distance of all the scores below it. So if I've got a dataset like 2, 4, 9, the mean is 5. The deviations are -3, -1, and +4. If you add those up: -3 + -1 + 4, that's -4 + 4, which equals zero. It's not a coincidence for that particular dataset — it's guaranteed to happen for any set of numbers, because of how the mean is actually calculated. The mean is defined as the sum of all scores divided by n, and if you algebraically work through subtracting the mean from every score and adding those differences up, it mathematically has to come out to zero every time.\n\nThat's actually why, when we want to quantify the total error around the mean in a useful way — like for variance or standard deviation — we can't just add up the raw residuals, because they'd always cancel out to zero regardless of whether the model fits well or badly. That's the whole reason we square the residuals first, so the positive and negative signs don't wash each other out, and we can actually get a meaningful sense of the total spread of error around the model."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "That concludes our conversation today. Thank you for sharing such thorough and thoughtful explanations throughout!",
+        "belief": "The student demonstrates that they know concept 3.",
+        "relevant_concepts": [
+          "3"
+        ],
+        "target_misconceptions": []
+      }
+    ]
+  }
+]

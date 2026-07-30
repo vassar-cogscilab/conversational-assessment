@@ -1,0 +1,132 @@
+[
+  {
+    "persona": "ccode_high_brief",
+    "trial_index": 1,
+    "expected": "High",
+    "guess": "Error",
+    "correct": false,
+    "turns_used": 0,
+    "error": "Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CdWxgfsd4Dxbze4tGzV4n'}",
+    "transcript": []
+  },
+  {
+    "persona": "ccode_poor_brief",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "Error",
+    "correct": false,
+    "turns_used": 0,
+    "error": "Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CdWxgfmfuJNvynLaog7RW'}",
+    "transcript": []
+  },
+  {
+    "persona": "ccode_high_right",
+    "trial_index": 1,
+    "expected": "High",
+    "guess": "Error",
+    "correct": false,
+    "turns_used": 0,
+    "error": "Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CdWxgvoYdU3YmCLHmFPvJ'}",
+    "transcript": []
+  },
+  {
+    "persona": "ccode_poor_right",
+    "trial_index": 1,
+    "expected": "Poor",
+    "guess": "High",
+    "correct": false,
+    "turns_used": 5,
+    "transcript": [
+      {
+        "turn": 0,
+        "role": "examiner",
+        "text": "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+      },
+      {
+        "turn": 1,
+        "role": "student",
+        "text": "The mean works as a model because it's the one number you'd use to predict every single score in your data, sort of like how a shape on a map stands in for the actual coastline of California. It's not too big or too small — it sits in the middle so it can represent the whole group at once."
+      },
+      {
+        "turn": 1,
+        "role": "examiner",
+        "text": "Suppose I use this single mean value to predict how much each person in a group actually scored on some test. If someone's actual score doesn't match that predicted value exactly, how would you describe what's happening there?",
+        "belief": "The student demonstrates that they know concepts 1 and 4.",
+        "relevant_concepts": [
+          "1",
+          "4"
+        ],
+        "target_misconceptions": []
+      },
+      {
+        "turn": 2,
+        "role": "student",
+        "text": "I'd call that an error, but I think of it more like the model got that person wrong rather than something normal that's supposed to happen — like if the mean predicts 80 and someone scored 85, the model just missed on that one."
+      },
+      {
+        "turn": 2,
+        "role": "examiner",
+        "text": "If you gathered scores from a whole new group of people who took the same test, would you expect every person's score to line up exactly with the mean, or is there some reason their scores might differ from it?",
+        "belief": "I cannot tell from the student's response whether they know concepts 2 and 3.",
+        "relevant_concepts": [
+          "2",
+          "3"
+        ],
+        "target_misconceptions": [
+          "3.1",
+          "3.2"
+        ]
+      },
+      {
+        "turn": 3,
+        "role": "student",
+        "text": "No, I wouldn't expect them to line up exactly — people are different, so their scores would spread out around the mean. But if there's a lot of that spreading, it feels like the mean isn't doing a great job as a model, since a stronger model should have people closer to it."
+      },
+      {
+        "turn": 3,
+        "role": "examiner",
+        "text": "Given that you'd expect people's scores to naturally spread out around the mean even in a brand new group, what do you think that spread represents about the relationship between the mean and the actual data, rather than about whether the model succeeded or failed?",
+        "belief": "The student demonstrates that they do not know concept 3.",
+        "relevant_concepts": [
+          "3"
+        ],
+        "target_misconceptions": [
+          "3.1",
+          "3.2"
+        ]
+      },
+      {
+        "turn": 4,
+        "role": "student",
+        "text": "I guess the spread is just showing how much people naturally differ from each other, like the mean can't capture everyone's individual personality or ability, so some of that gap is just people being people rather than the model failing. But part of me still thinks if the spread got really big, like that standard deviation number, it would mean the mean isn't describing the group well anymore."
+      },
+      {
+        "turn": 4,
+        "role": "examiner",
+        "text": "Let's take a concrete case: imagine a class of students all take the same quiz, and the only information you have is the mean score. If you wanted to describe how each student's actual quiz score relates to that mean, what pieces would you say make up that actual score?",
+        "belief": "The student demonstrates that they know concept 3.",
+        "relevant_concepts": [
+          "3"
+        ],
+        "target_misconceptions": [
+          "3.2"
+        ]
+      },
+      {
+        "turn": 5,
+        "role": "student",
+        "text": "I'd say each student's actual score is made up of the mean plus however far off they are from it — like their own deviation, similar to that numerator in the z-score formula, the score minus the mean. So it's the model part, the mean, plus that leftover piece that's personal to them."
+      },
+      {
+        "turn": 5,
+        "role": "examiner",
+        "text": "That concludes our conversation today—thank you for working through these questions with me!",
+        "belief": "The student demonstrates that they know concept 2.",
+        "relevant_concepts": [
+          "2"
+        ],
+        "target_misconceptions": []
+      }
+    ]
+  }
+]
