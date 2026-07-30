@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CourseKata AI — Guess the Student</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="header-left">
+        <h1>{KATALM}</h1>
+      </div>
+      <div class="header-right">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-active">Chat</a>
+        <a class="nav-link" href="guess-reveal.html" target="_blank">Reveal</a>
+      </div>
+    </header>
+    <p class="guess-instructions">
+      You're the examiner now. Ask this AI student questions and decide: does it have a
+      <strong>High</strong> or <strong>Poor</strong> understanding of the mean as a model?
+      Lock in your guess when you're ready.
+    </p>
+    <section id="chat"></section>
+    <div id="guess-buttons">
+      <button type="button" id="guess-poor-btn" class="guess-btn" disabled>I think: Poor understanding</button>
+      <button type="button" id="guess-high-btn" class="guess-btn" disabled>I think: High understanding</button>
+    </div>
+    <form id="form">
+      <textarea id="input" placeholder="Ask the student a question..." name="input" disabled></textarea>
+      <button type="submit" id="submit-btn" disabled>Ask</button>
+      <button id="clear-btn" type="button">New Student</button>
+    </form>
+  </main>
+  <script type="module" src="guess.js"></script>
+</body>
+</html>

@@ -57,7 +57,7 @@ jobs:
         run: |
           rsync -az --delete \
             --exclude venv --exclude __pycache__ --exclude '*.pyc' --exclude .env \
-            --exclude sessions.json \
+            --exclude sessions.json --exclude guess_sessions.json \
             -e "ssh -i ~/.ssh/deploy_key" \
             backend/ \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${REMOTE_BACKEND}/"

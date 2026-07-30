@@ -8,6 +8,7 @@ __pycache__/
 !.env.example
 local.env
 backend/sessions.json
+backend/guess_sessions.json
 backend/history.json
 *.log
 .DS_Store

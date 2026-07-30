@@ -14,8 +14,9 @@
         <h1>{KATALM}</h1>
       </div>
       <div class="header-right">
-        <a id="student-press" href="index.html">Student</a>
-        <a id="instructor-press">Instructor</a>
+        <a class="nav-link" href="index.html">Student</a>
+        <a class="nav-active">Instructor</a>
+        <a class="nav-link" href="guess.html" target="_blank">Guess the Student</a>
       </div>
     </header>
     <div id="summary-box" class="placeholder">No evaluation summary yet. Submit a response on the student page first.</div>
@@ -23,7 +24,7 @@
   <script type="module">
     const summaryBox = document.getElementById("summary-box");
     const sessionId = localStorage.getItem("session_id");
-    const local = "api" /*"http://127.0.0.1:3001"*/;
+    const local = "http://127.0.0.1:3001" /*"api"*/;
 
     async function loadSummary() {
       if (!sessionId) return;

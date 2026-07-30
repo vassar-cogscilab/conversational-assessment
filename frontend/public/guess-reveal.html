@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CourseKata AI — Reveal</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="header-left">
+        <h1>{KATALM}</h1>
+      </div>
+      <div class="header-right">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="guess.html">Chat</a>
+        <a class="nav-active">Reveal</a>
+      </div>
+    </header>
+    <div id="summary-box" class="placeholder">Loading...</div>
+  </main>
+  <script type="module">
+    const summaryBox = document.getElementById("summary-box");
+    const sessionId = localStorage.getItem("guess_session_id");
+    const local = "http://127.0.0.1:3001" /*"api"*/;
+
+    async function loadReveal() {
+      if (!sessionId) {
+        summaryBox.textContent = "No game in progress — start one from the Chat tab.";
+        return;
+      }
+      try {
+        const res = await fetch(`${local}/guess/summary?session_id=${sessionId}`);
+        if (!res.ok) {
+          summaryBox.textContent = "Could not load results — start a new game from the Chat tab.";
+          return;
+        }
+        const data = await res.json();
+        if (!data.guessed) {
+          summaryBox.textContent = "You haven't locked in a guess yet — go to the Chat tab and make one.";
+          return;
+        }
+        const verdict = data.correct ? "Correct!" : "Not quite.";
+        summaryBox.textContent =
+          `${verdict} You guessed ${data.guess}. The student actually had ${data.expected} understanding of the mean as a model.`;
+        summaryBox.classList.remove("placeholder");
+      } catch (err) {
+        summaryBox.textContent = "Could not load results — backend unavailable.";
+      }
+    }
+
+    loadReveal();
+  </script>
+</body>
+</html>

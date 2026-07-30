@@ -3,6 +3,7 @@ import re
 import sys
 import json
 import uuid
+import random
 import secrets
 from pathlib import Path
 
@@ -47,6 +48,32 @@ except (FileNotFoundError, json.JSONDecodeError):
 def save_sessions():
     with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
         json.dump(sessions, f, ensure_ascii=False, indent=2)
+
+# "Guess the Student" game: the human plays examiner and chats with an AI
+# student persona, then guesses whether it has Poor or High understanding.
+# Separate session store from the exam-mode `sessions` above so the two
+# modes' state (and files) never collide.
+STUDENT_PERSONAS_DIR = BASE_DIR / "student_personas"
+GUESS_PERSONAS = {
+    "poor_brief": {"file": STUDENT_PERSONAS_DIR / "poor_brief.txt", "expected": "Poor"},
+    "poor_right": {"file": STUDENT_PERSONAS_DIR / "poor_right.txt", "expected": "Poor"},
+    "high_brief": {"file": STUDENT_PERSONAS_DIR / "high_brief.txt", "expected": "High"},
+    "high_right": {"file": STUDENT_PERSONAS_DIR / "high_right.txt", "expected": "High"},
+}
+GUESS_PERSONA_PROMPTS = {
+    name: info["file"].read_text(encoding="utf-8") for name, info in GUESS_PERSONAS.items()
+}
+
+GUESS_SESSIONS_FILE = BASE_DIR / "guess_sessions.json"
+try:
+    with open(GUESS_SESSIONS_FILE, "r", encoding="utf-8") as f:
+        guess_sessions = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    guess_sessions = {}
+
+def save_guess_sessions():
+    with open(GUESS_SESSIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(guess_sessions, f, ensure_ascii=False, indent=2)
 
 INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
 
@@ -127,6 +154,7 @@ def fix_stray_unicode_escapes(text: str) -> str:
 
 
 MAX_TURNS = 12
+GUESS_MAX_TURNS = 12
 
 EXAMINER_SCHEMA = {
     "type": "object",
@@ -258,6 +286,92 @@ def get_string():
     save_sessions()
 
     return jsonify(server_message=parsed["question"], evaluation_summary=session.get("evaluation_summary"))
+
+
+@app.post("/guess/new_chat")
+def guess_new_chat():
+    session_id = str(uuid.uuid4())
+    persona = random.choice(list(GUESS_PERSONAS))
+    student_prompt = GUESS_PERSONA_PROMPTS[persona]
+
+    messages = [{"role": "user", "content": INITIAL_MESSAGE}]
+    rag_context = render_rag_blocks(get_rag_context(INITIAL_MESSAGE))
+    student_reply, _ = call_claude(messages, student_prompt, rag_context=rag_context)
+    messages.append({"role": "assistant", "content": student_reply})
+
+    guess_sessions[session_id] = {
+        "persona": persona,
+        "expected": GUESS_PERSONAS[persona]["expected"],
+        "messages": messages,
+        "turns": 0,
+        "guessed": False,
+    }
+    save_guess_sessions()
+    return jsonify(session_id=session_id, prompt=INITIAL_MESSAGE, student_reply=student_reply)
+
+
+@app.post("/guess/message")
+def guess_message():
+    body = request.get_json() or {}
+    session_id = body.get("session_id", "")
+    user_input = body.get("input", "")
+
+    if session_id not in guess_sessions:
+        return jsonify(error="session_not_found"), 404
+
+    session = guess_sessions[session_id]
+    if session["guessed"]:
+        return jsonify(error="already_guessed"), 400
+    if session["turns"] >= GUESS_MAX_TURNS:
+        return jsonify(error="turn_limit_reached"), 400
+
+    student_prompt = GUESS_PERSONA_PROMPTS[session["persona"]]
+    rag_context = render_rag_blocks(get_rag_context(user_input))
+
+    session["messages"].append({"role": "user", "content": user_input})
+    student_reply, _ = call_claude(session["messages"], student_prompt, rag_context=rag_context)
+    session["messages"].append({"role": "assistant", "content": student_reply})
+    session["turns"] += 1
+
+    save_guess_sessions()
+    return jsonify(
+        student_reply=student_reply,
+        turns=session["turns"],
+        turns_remaining=GUESS_MAX_TURNS - session["turns"],
+    )
+
+
+@app.post("/guess/reveal")
+def guess_reveal():
+    body = request.get_json() or {}
+    session_id = body.get("session_id", "")
+    guess = body.get("guess", "")
+
+    if session_id not in guess_sessions:
+        return jsonify(error="session_not_found"), 404
+    if guess not in ("Poor", "High"):
+        return jsonify(error="invalid_guess"), 400
+
+    session = guess_sessions[session_id]
+    if not session["guessed"]:
+        session["guessed"] = True
+        session["guess"] = guess
+        session["correct"] = guess == session["expected"]
+        save_guess_sessions()
+
+    return jsonify(guess=session["guess"], expected=session["expected"], correct=session["correct"])
+
+
+@app.get("/guess/summary")
+def guess_summary():
+    session_id = request.args.get("session_id", "")
+    if session_id not in guess_sessions:
+        return jsonify(error="session_not_found"), 404
+
+    session = guess_sessions[session_id]
+    if not session["guessed"]:
+        return jsonify(guessed=False)
+    return jsonify(guessed=True, guess=session["guess"], expected=session["expected"], correct=session["correct"])
 
 
 def require_admin():
