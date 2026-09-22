@@ -9,11 +9,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import anthropic
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5500"}})
 app.secret_key = secrets.token_hex(32)
 client = anthropic.Anthropic()
 

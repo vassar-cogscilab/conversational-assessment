@@ -2,12 +2,36 @@ const INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or 
 const local = "http://127.0.0.1:3001" /*"api"*/;
 
 const chatEl = document.getElementById("chat");
-const chatForm = document.getElementById("form");
+const chatForm = document.querySelector(".input");
 const inputField = document.getElementById("input");
 const submitBtn = document.getElementById("submit-btn");
 const clearBtn = document.getElementById("clear-btn");
+const printBtn = document.querySelector(".print-btn");
+
+const revealBox = document.querySelector('.reveal');
+const testBox = document.querySelector('.test');
+const continueBtn = document.querySelector('.instructions .continue-btn');
+const instructionBox = document.querySelector('.instructions');
 
 let sessionId = localStorage.getItem("session_id") || null;
+
+function showInitialView() {
+  if (localStorage.getItem("seen_instructions") == "false") {
+    instructionBox.style.display = "flex";
+    testBox.style.display = "none";
+    return;
+  }
+  else {
+    instructionBox.style.display = "none";
+    testBox.style.display = "flex";
+  }
+}
+
+continueBtn.addEventListener("click", () => {
+  localStorage.setItem("seen_instructions", "true");
+  testBox.style.display = "flex";
+  instructionBox.style.display = "none";
+});
 
 function appendMessage(role, content) {
   const div = document.createElement("div");
@@ -33,6 +57,8 @@ async function startNewSession() {
 
 window.onload = async function () {
   const stored = localStorage.getItem("chat_display");
+  localStorage.setItem("seen_instructions", "false");
+  showInitialView();
   if (stored && sessionId) {
     JSON.parse(stored).forEach(msg => {
       const div = document.createElement("div");
@@ -101,3 +127,23 @@ clearBtn.addEventListener("click", async function () {
   if (!confirm("Are you sure you want to start a new chat? Your current session will be cleared.")) return;
   await startNewSession();
 });
+
+printBtn.addEventListener("click", function () {
+  window.print();
+});
+
+async function loadSummary() {
+  if (!sessionId) return;
+  try {
+    const res = await fetch(`${local}/summary?session_id=${sessionId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.evaluation_summary) {
+      revealBox.textContent = data.evaluation_summary;
+      revealBox.classList.remove("placeholder");
+    }
+  } catch (err) {
+    revealBox.textContent = "Could not load summary — backend unavailable.";
+  }
+}
+

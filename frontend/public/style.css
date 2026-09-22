@@ -1,14 +1,56 @@
 * { box-sizing: border-box; }
 body {
-    display: block;
+    margin: 0;
+    padding: 0;   
     min-height: 100%;
-    grid-template-rows: auto;
-    grid-template-columns: 1fr;
     font-family: Arial, Roboto, sans-serif;
     font-size: 16px;
     line-height: 1.2;
-    overflow: hidden;
+    overflow: auto;
     background: var(--background-color);
+    box-sizing: border-box;
+}
+
+@media print {
+  /* 1. Allow the body to scroll and expand onto multiple pages */
+  body {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* 2. Break the app layout out of the strict 100vh viewport height */
+  .app {
+    height: auto !important;
+    width: 100% !important;
+    display: block !important; /* Changes flex to standard page flow */
+  }
+
+  /* 3. Force scrollable chat areas to reveal all their hidden content */
+  #chat, 
+  #summary-box, 
+  .test {
+    overflow: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* 4. Remove animations that might lock final states or hide text */
+  .message, 
+  .user, 
+  .assistant {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* 5. Hide web-only controls like inputs and buttons from the printout */
+  .input,
+  button,
+  #clear-btn,
+  .print-btn {
+    display: none !important;
+  }
 }
 
 :root {
@@ -59,26 +101,56 @@ body {
 }
 
 header {
-  padding: 22px 22px;
+  padding: 22px 8px;
   background: var(--background-color);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto; 
   align-items: center;
-  justify-content: space-between;
+  row-gap: 10px;
 }
 
-.header-left h1 {
+header h1 {
   margin: 0;
   font-size: 3em;
-  line-height: 1.25;
   color: var(--primary-color);
   cursor: default;
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
 }
 
-.header-right {
-  display: flex;
-  column-gap: 20px;
-  flex-direction: row;
+header h2{
+  margin: 0;
+  font-size: clamp(1.1rem, 3vw, 1.8rem);
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+  color: var(--primary-color);
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+}
+
+.print-btn {
+  margin: 0;
+  order: 3;
+  cursor: pointer;
+  transition-timing-function: ease;
+  transition-duration: .2s;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.print-btn:hover {
+  scale: 105%;
+}
+
+@media (max-width: 720px) {
+  header h2 {
+    grid-column: 1 / span 3;
+    grid-row: 2;
+    justify-self: center;
+  }
 }
 
 /* Nav link for the page currently being viewed (no href, bolder). */
@@ -149,6 +221,7 @@ header {
   gap: 14px;
   background-color: var(--background-dark);
   border-radius: 15px;
+  mask-image: linear-gradient(to top, transparent, black 12px);
 }
 
 .message {
@@ -203,11 +276,13 @@ header {
   animation: slideUpFadeUser 0.8s ease-in-out forwards;
 }
 
-form {
+.input {
   display: flex;
   gap: 10px;
-  padding-top: 14px;
-  padding-bottom: 20px;
+  padding-top: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-bottom: 0px;
   background: var(--background-color);
 }
 
@@ -216,6 +291,7 @@ textarea {
   min-height: 48px;
   max-height: 140px;
   padding: 12px;
+  padding-top: 6px;
   border: 2px solid var(--primary-color);
   border-radius: 8px;
   transition-timing-function: ease;
@@ -235,7 +311,7 @@ textarea:focus {
 }
 
 button {
-  width: 92px;
+  min-width: 92px;
   border: 0;
   border-radius: 8px;
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
@@ -298,16 +374,17 @@ button:disabled {
   line-height: 1.4;
 }
 
-#guess-buttons {
+.guess-buttons {
   display: flex;
-  gap: 10px;
-  padding-top: 14px;
+  gap: 15px;
+  justify-content: center;
 }
 
 .guess-btn {
-  flex: 1;
-  width: auto;
+  padding: 10px 20px;
+  font-size: 15px;
 }
+
 
 #summary-box {
   flex: 1;
@@ -325,4 +402,49 @@ button:disabled {
 #summary-box.placeholder {
   color: var(--background-dark);
   font-style: italic;
+}
+
+.test {
+  overflow-y: auto;
+  background-color: var(--background-dark);
+  flex-direction: column;
+  flex: 1;
+  display: flex;
+}
+
+.reveal {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  background: var(--background-color);
+  text-align: center;
+  display: none;
+  font-size: 30px;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+  flex-direction: column;
+}
+
+.instructions {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  background: var(--background-color);
+  text-align: center;
+  display: none;
+  flex-direction: column;
+}
+
+.instructions p {
+  font-size: 30px;
+  font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
+}
+
+.continue-btn {
+  font-size: 20px;
+  padding: 10px 20px;
+  display: flex;
+}
+
+footer {
+  padding: 10px
 }

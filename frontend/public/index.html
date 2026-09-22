@@ -10,25 +10,31 @@
 <body>
   <main class="app">
     <header>
-      <div class="header-left">
         <h1>{KATALM}</h1>
-      </div>
-      <div class="header-right">
-        <a class="nav-active">Student</a>
-        <a class="nav-link" href="instructor.html" target="_blank">Instructor</a>
-        <a class="nav-link" href="guess.html" target="_blank">Guess the Student</a>
-      </div>
+        <h2> A Conversation-Based Artifical Examiner </h2>
+        <img class="print-btn" src="printer.svg" width="30" height="30" />
     </header>
-    <section id="chat"></section>
-    <div id="instructor-panel" hidden>
-      <h2>Instructor View</h2>
-      <div id="summary-content">Submit a student response to see the evaluation summary.</div>
+    <div class="test">
+      <section id="chat"></section>
+      <div id="instructor-panel" hidden>
+        <h2>Instructor View</h2>
+        <div id="summary-content">Submit a student response to see the evaluation summary.</div>
+      </div>
+      <form class="input">
+        <textarea id="input" placeholder="Type your answer here..." name="input"></textarea>
+        <button type="submit" id="submit-btn">Submit</button>
+        <button id="clear-btn">New Chat</button>
+      </form>
     </div>
-    <form id="form">
-      <textarea id="input" placeholder="Type your answer here..." name="input"></textarea>
-      <button type="submit" id="submit-btn">Submit</button>
-      <button id="clear-btn">New Chat</button>
-    </form>
+    <div class="reveal"></div>
+    <div class="instructions">
+      <p class="guess-instructions">
+        On the following page, you will be put into a conversation with an AI examiner, questioning you on your understanding of the mean as a model. Answer the examiner's questions as well as you can. The examiner will let you know when the conversation is over.
+      </p>
+      <button class="continue-btn">Continue</button>
+    </div>
+    <footer>
+    </footer>
   </main>
   <script type="module" src="app.js"></script>
 </body>
