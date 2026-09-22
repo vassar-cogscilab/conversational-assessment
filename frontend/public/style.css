@@ -221,7 +221,6 @@ header h2{
   gap: 14px;
   background-color: var(--background-dark);
   border-radius: 15px;
-  mask-image: linear-gradient(to top, transparent, black 12px);
 }
 
 .message {
