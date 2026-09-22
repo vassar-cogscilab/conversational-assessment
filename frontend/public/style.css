@@ -233,7 +233,7 @@ header h2{
   border-radius: 8px;
   line-height: 1.45;
   white-space: pre-wrap;
-  font-size: 15px;
+  font-size: 16px;
   word-wrap: break-word;
 }
 
@@ -301,7 +301,7 @@ textarea {
   transition-duration: .2s;
   font-family: Inter, Roboto, Helvetica Neue, Arial Nova, Nimbus Sans, Arial, sans-serif;
   resize: none;
-  font-size: 15px;
+  font-size: 16px;
   background: var(--background-color);
   color: var(--text-color-alt);
 }
@@ -379,13 +379,13 @@ button:disabled {
 
 .guess-buttons {
   display: flex;
-  gap: 15px;
+  gap: 16px;
   justify-content: center;
 }
 
 .guess-btn {
   padding: 10px 20px;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 
@@ -397,7 +397,7 @@ button:disabled {
   background-color: var(--background-dark);
   border-radius: 15px;
   white-space: pre-wrap;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   font-size: 100px;
   font-weight: 100px;
