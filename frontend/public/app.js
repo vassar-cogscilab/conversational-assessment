@@ -1,5 +1,5 @@
 const INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but why do you think we use it to represent a bunch of data?";
-const local = /*api"*/ "http://127.0.0.1:3001"
+const local = /*"http://127.0.0.1:3001"*/ "api"
 
 const chatEl = document.getElementById("chat");
 const chatForm = document.querySelector(".input");
