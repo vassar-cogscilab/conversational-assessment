@@ -77,7 +77,7 @@ def save_guess_sessions():
     with open(GUESS_SESSIONS_FILE, "w", encoding="utf-8") as f:
         json.dump(guess_sessions, f, ensure_ascii=False, indent=2)
 
-INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?"
+INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but why do you think we use it to represent a bunch of data?"
 
 BASE_MESSAGES = [
     {"role": "assistant", "content": INITIAL_MESSAGE},

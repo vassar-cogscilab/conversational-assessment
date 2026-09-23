@@ -225,6 +225,8 @@ header h2{
   gap: 14px;
   background-color: var(--background-dark);
   border-radius: 15px;
+  -webkit-mask-image: linear-gradient(to top, transparent, black 12px);
+  mask-image: linear-gradient(to top, transparent, black 12px);
 }
 
 .message {
@@ -435,6 +437,7 @@ button:disabled {
   text-align: center;
   display: none;
   flex-direction: column;
+  margin: 0 20px;
 }
 
 .instructions p {
