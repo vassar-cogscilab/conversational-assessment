@@ -38,11 +38,17 @@ body {
 
   /* 4. Remove animations that might lock final states or hide text */
   .message, 
-  .user, 
+  .user,
   .assistant {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+    border: 2px solid #000000;
+    color: #000000 !important;
+  }
+
+  .user {
+    border: 2px dotted #000000 !important;
   }
 
   /* 5. Hide web-only controls like inputs and buttons from the printout */
