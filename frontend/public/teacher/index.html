@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CourseKata AI</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="icon" href="../favicon.ico" />
+</head>
+<body>
+    <main class="app">
+    <header class="menu">
+        <h1>{KATALM} Instructor</h1>
+        <ul>
+          <li data-tab-target="#classroom" class="menu-btn">Classroom</li>
+          <li data-tab-target="#student" class="menu-btn">Student</li>
+        </ul>
+    </header>
+      <div class="tab" id="classroom">
+        <div class="conversations"></div>
+      </div>
+    <div class="tab" id="student">
+        <div class="conversation"></div>
+      <div class="feedback">
+        <h1>Instructor Feedback</h1>
+        <form class="form" id="rating-form">
+          <div class="form-control">
+            <div class="question">
+              <label>Do you think the student demonstrated their understanding?</label>
+            </div>
+            <div class="response">
+              <label for="understanding-feedback-1">
+                  <input type="radio" id="understanding-feedback-1" name="understanding-feedback" value="yes" required>Yes
+              </label>
+              <label for="understanding-feedback-2">
+                  <input type="radio" id="understanding-feedback-2" name="understanding-feedback" value="no">No
+              </label>
+              <label for="understanding-feedback-3">
+                  <input type="radio" id="understanding-feedback-3" name="understanding-feedback" value="unsure">Not enough evidence
+              </label>
+            </div>
+          </div>
+          <div class="form-control">
+            <div class="question">
+              <label>Do you think the AI interviewer asked good questions?</label>
+            </div>
+            <div class="response">
+              <label for="question-feedback-1">
+                  <input type="radio" id="question-feedback-1" name="question-feedback" value="yes" required>Yes
+              </label>
+              <label for="question-feedback-2">
+                  <input type="radio" id="question-feedback-2" name="question-feedback" value="no">No
+              </label>
+              <label for="question-feedback-3">
+                  <input type="radio" id="question-feedback-3" name="question-feedback" value="unsure">Not enough evidence
+              </label>
+            </div>
+          </div>
+          <div class="form-control">
+            <div class="question">
+              <label>On a scale from 1 (lowest) to 7 (highest), how would you rate the similarity between questions posed by the AI interviewer compared to those posed by an expert human interviewer?</label>
+            </div>
+            <div class="response">
+              <label for="question-rating-1">
+                  <input type="radio" id="question-rating-1" name="question-rating" value="1" required>1 (Not similar)
+              </label>
+              <label for="question-rating-2">
+                  <input type="radio" id="question-rating-2" name="question-rating" value="2">2
+              </label>
+              <label for="question-rating-3">
+                  <input type="radio" id="question-rating-3" name="question-rating" value="3">3
+              </label>
+              <label for="question-rating-4">
+                  <input type="radio" id="question-rating-4" name="question-rating" value="4">4
+              </label>
+              <label for="question-rating-5">
+                  <input type="radio" id="question-rating-5" name="question-rating" value="5">5
+              </label>
+              <label for="question-rating-6">
+                  <input type="radio" id="question-rating-6" name="question-rating" value="6">6
+              </label>
+              <label for="question-rating-7">
+                  <input type="radio" id="question-rating-7" name="question-rating" value="7">7 (Very similar)
+              </label>
+            </div>
+          </div>
+          <div class="form-control">
+            <div class="question">
+              <label for="comment">Any additional feedback or notes?</label>
+            </div>
+            <div class="response">
+              <textarea name="comment" id="comment" placeholder="Enter your comment here"></textarea>
+            </div>
+          </div>
+          <button type="submit" class="submit">Submit</button>
+          <p id="rating-status"></p>
+        </form>
+      </div>
+    </div>
+    <footer></footer>
+  </main>
+  <script type="module" src="teacher.js"></script>
+</body>
+</html>
+
