@@ -1,7 +1,5 @@
-const INITIAL_MESSAGE = "Everyone thinks of the mean as the central tendency or average, but explain what it is for the mean to be a model?";
-const local = /*"http://127.0.0.1:3001"*/ "api"
-
-const chatEl = document.getElementById("chat");
+const local = /*"api"*/ "http://127.0.0.1:3001"
+const chatEl = document.querySelector(".chat");
 const chatForm = document.querySelector(".input");
 const inputField = document.getElementById("input");
 const submitBtn = document.getElementById("submit-btn");
@@ -13,7 +11,11 @@ const testBox = document.querySelector('.test');
 const continueBtn = document.querySelector('.instructions .continue-btn');
 const instructionBox = document.querySelector('.instructions');
 
+const infoBox = document.querySelector('.info');
+
 let sessionId = localStorage.getItem("session_id") || null;
+
+infoBox.textContent = "Session ID: " + sessionId;
 
 function showInitialView() {
   if (localStorage.getItem("seen_instructions") == "false") {
@@ -38,7 +40,6 @@ function appendMessage(role, content) {
   div.className = "message " + role;
   div.textContent = content;
   chatEl.appendChild(div);
-  chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
 
   const history = JSON.parse(localStorage.getItem("chat_display") || "[]");
   history.push({ role, content });
@@ -46,13 +47,18 @@ function appendMessage(role, content) {
 }
 
 async function startNewSession() {
-  const res = await fetch(`${local}/new_chat`, { method: "POST" });
+  const res = await fetch(`${local}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: null, input: null }),
+  });
   const data = await res.json();
   sessionId = data.session_id;
   localStorage.setItem("session_id", sessionId);
   localStorage.removeItem("chat_display");
   chatEl.innerHTML = "";
-  appendMessage("assistant", INITIAL_MESSAGE);
+  appendMessage("assistant", data.server_message);
+  sessionId = localStorage.getItem("session_id") || null;
 }
 
 window.onload = async function () {
@@ -61,10 +67,12 @@ window.onload = async function () {
   showInitialView();
   if (stored && sessionId) {
     JSON.parse(stored).forEach(msg => {
-      const div = document.createElement("div");
-      div.className = "message " + msg.role;
-      div.textContent = msg.content;
-      chatEl.appendChild(div);
+        chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
+
+        const div = document.createElement("div");
+        div.className = "message " + msg.role;
+        div.textContent = msg.content;
+        chatEl.appendChild(div);
     });
     chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
   } else {
@@ -96,7 +104,7 @@ chatForm.addEventListener("submit", async function (e) {
   chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
 
   try {
-    const res = await fetch(`${local}/string`, {
+    const res = await fetch(`${local}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, input: userInputValue }),
@@ -131,19 +139,3 @@ clearBtn.addEventListener("click", async function () {
 printBtn.addEventListener("click", function () {
   window.print();
 });
-
-async function loadSummary() {
-  if (!sessionId) return;
-  try {
-    const res = await fetch(`${local}/summary?session_id=${sessionId}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.evaluation_summary) {
-      revealBox.textContent = data.evaluation_summary;
-      revealBox.classList.remove("placeholder");
-    }
-  } catch (err) {
-    revealBox.textContent = "Could not load summary — backend unavailable.";
-  }
-}
-

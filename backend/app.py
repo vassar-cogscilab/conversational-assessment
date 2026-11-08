@@ -13,6 +13,8 @@ from flask_cors import CORS
 import anthropic
 
 load_dotenv()
+import threading
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5500"}})
@@ -21,6 +23,20 @@ client = anthropic.Anthropic()
 
 BASE_DIR = Path(__file__).resolve().parent
 RAG_DIR = BASE_DIR.parent / "RAG_5-9"
+
+RATINGS_FILE = BASE_DIR / "ratings.json"
+ratings_lock = threading.Lock()
+try:
+    with open(RATINGS_FILE, "r", encoding="utf-8") as f:
+        ratings = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    ratings = {}
+
+def save_ratings():
+    tmp = RATINGS_FILE.with_suffix(".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(ratings, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, RATINGS_FILE)
 
 with open(BASE_DIR / "examiner_prompt.txt", encoding="utf-8") as f:
     examiner_prompt = f.read()
@@ -145,7 +161,7 @@ def call_claude(messages, prompt, rag_context=None, output_schema=None):
             "increase max_tokens in call_claude."
         )
     text = next(block.text for block in response.content if block.type == "text")
-    thinking = next((block.thinking for block in response.content if block.type == "thinking"), "")
+    thinking = next((b.thinking for b in response.content if b.type == "thinking"), "").strip()
     return text, thinking
 
 _STRAY_UNICODE_ESCAPE_RE = re.compile(r"\\u([0-9a-fA-F]{4})")
@@ -204,11 +220,10 @@ def belief_line(concept_judgment: str, relevant_concepts: list[str]) -> str:
 
 
 def format_examiner_turn(parsed: dict) -> str:
-    lines = [f"Belief: {belief_line(parsed['concept_judgment'], parsed['relevant_concepts'])}"]
+    lines = [f"{parsed['question']}"]
     if parsed["conversation_state"] == "finished":
         lines.append("Conversation state: finished")
         lines.append(f"Understanding of the mean as a model: {parsed['understanding_of_mean_as_model']}")
-    lines.append(f"Question: {parsed['question']}")
     return "\n".join(lines)
 
 
@@ -221,37 +236,31 @@ def health():
         hasApiKey=bool(os.environ.get("ANTHROPIC_API_KEY")),
     )
 
-@app.get("/summary")
-def get_summary():
-    session_id = request.args.get("session_id", "")
-    if session_id not in sessions:
-        return jsonify(error="session_not_found"), 404
-    summary = sessions[session_id].get("evaluation_summary", "No summary yet.")
-    return jsonify(evaluation_summary=summary)
-
-@app.post("/new_chat")
-def new_chat():
-    session_id = str(uuid.uuid4())
-    sessions[session_id] = {
-        "messages": list(BASE_MESSAGES),
-        "turns": 0,
-        "current_question": INITIAL_MESSAGE,
-        "rag_contexts": [],
-        "turn_log": [],
-    }
-    save_sessions()
-    return jsonify(session_id=session_id, initial_message=INITIAL_MESSAGE)
-
-
-@app.post("/string")
-def get_string():
+@app.post("/chat")
+def chat():
     body = request.get_json() or {}
-    session_id = body.get("session_id", "")
-    user_input = body.get("input", "")
+    session_id = body.get("session_id")
+    user_input = body.get("input")
 
-    if session_id not in sessions:
-        return jsonify(error="session_not_found"), 404
+    # No session_id (or unknown one) + no input => start a new session
+    if not session_id or session_id not in sessions:
+        session_id = str(uuid.uuid4())
+        sessions[session_id] = {
+            "messages": list(BASE_MESSAGES),
+            "turns": 0,
+            "current_question": INITIAL_MESSAGE,
+            "rag_contexts": [],
+            "turn_log": [],
+        }
+        save_sessions()
+        return jsonify(
+            session_id=session_id,
+            server_message=INITIAL_MESSAGE,
+            evaluation_summary=None,
+            turns=0,
+        )
 
+    # Otherwise, treat it as a normal turn
     session = sessions[session_id]
 
     rag_blocks = get_rag_context(user_input)
@@ -277,7 +286,6 @@ def get_string():
     session["turns"] += 1
 
     finished = parsed["conversation_state"] == "finished" or session["turns"] >= MAX_TURNS
-
     if finished and "evaluation_summary" not in session:
         understanding = parsed["understanding_of_mean_as_model"]
         session["evaluation_summary"] = (
@@ -287,7 +295,12 @@ def get_string():
 
     save_sessions()
 
-    return jsonify(server_message=parsed["question"], evaluation_summary=session.get("evaluation_summary"))
+    return jsonify(
+        session_id=session_id,
+        server_message=parsed["question"],
+        evaluation_summary=session.get("evaluation_summary"),
+        turns=session["turns"],
+    )
 
 
 @app.post("/guess/new_chat")
@@ -400,7 +413,6 @@ def admin_list_sessions():
         for session_id, s in sessions.items()
     ])
 
-
 @app.get("/admin/sessions/<session_id>")
 def admin_get_session(session_id):
     err = require_admin()
@@ -409,6 +421,54 @@ def admin_get_session(session_id):
     if session_id not in sessions:
         return jsonify(error="session_not_found"), 404
     return jsonify(session_id=session_id, **sessions[session_id])
+
+FEEDBACK_CHOICES = {"yes", "no", "unsure"}
+
+@app.post("/rating")
+def submit_rating():
+    body = request.get_json(silent=True) or {}
+    session_id = body.get("session_id")
+    rater_id = body.get("rater_id")
+    understanding = body.get("understanding_feedback")
+    question_fb = body.get("question_feedback")
+    comment = (body.get("comment") or "").strip()
+
+    try:
+        rating = int(body.get("question_rating"))
+    except (TypeError, ValueError):
+        return jsonify(error="invalid_rating"), 400
+    if not 1 <= rating <= 7:
+        return jsonify(error="invalid_rating"), 400
+    if understanding not in FEEDBACK_CHOICES or question_fb not in FEEDBACK_CHOICES:
+        return jsonify(error="invalid_feedback"), 400
+    if len(comment) > 2000:
+        return jsonify(error="comment_too_long"), 400
+    if not isinstance(session_id, str) or session_id not in sessions:
+        return jsonify(error="session_not_found"), 404
+    if not isinstance(rater_id, str) or not 8 <= len(rater_id) <= 64:
+        return jsonify(error="invalid_rater"), 400
+
+    with ratings_lock:
+        per_session = ratings.setdefault(session_id, {})
+        if rater_id in per_session:
+            return jsonify(error="already_submitted"), 409
+        per_session[rater_id] = {
+            "understanding_feedback": understanding,
+            "question_feedback": question_fb,
+            "question_rating": rating,
+            "comment": comment,
+            "submitted_at": datetime.now(timezone.utc).isoformat(),
+        }
+        save_ratings()
+
+    return jsonify(ok=True), 201
+
+@app.get("/admin/ratings")
+def admin_list_ratings():
+    err = require_admin()
+    if err:
+        return err
+    return jsonify(ratings=ratings)
 
 
 @app.errorhandler(404)
