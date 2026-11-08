@@ -17,7 +17,7 @@ import threading
 from datetime import datetime, timezone
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5500"}})
+CORS(app, resources={r"/*": {"origins": ["https://vassar.edu", "http://127.0.0.1:5500"]}})
 app.secret_key = secrets.token_hex(32)
 client = anthropic.Anthropic()
 
