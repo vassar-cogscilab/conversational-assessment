@@ -1,4 +1,3 @@
-const local = /*"api"*/ "http://127.0.0.1:3001"
 const chatEl = document.querySelector(".chat");
 const chatForm = document.querySelector(".input");
 const inputField = document.getElementById("input");
@@ -16,6 +15,10 @@ const infoBox = document.querySelector('.info');
 let sessionId = localStorage.getItem("session_id") || null;
 
 infoBox.textContent = "Session ID: " + sessionId;
+
+const local = ["127.0.0.1", "localhost"].includes(location.hostname)
+  ? "http://127.0.0.1:3001"
+  : "api";
 
 function showInitialView() {
   if (localStorage.getItem("seen_instructions") == "false") {
