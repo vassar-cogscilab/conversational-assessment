@@ -1,8 +1,9 @@
-// Local dev talks to Flask directly; on the server, "api" resolves relative to
-// the page (/convo/api/...) and the reverse proxy forwards it to Flask.
+// Local dev talks to Flask directly. On the server this page lives at /convo/teacher/,
+// so a relative "api" would resolve to the wrong place; use the absolute path: the reverse proxy that serves
+// /convo/api/ forwards it to Flask (same origin, so no CORS involved).
 const local = ["127.0.0.1", "localhost"].includes(location.hostname)
   ? "http://127.0.0.1:3001"
-  : "api";
+  : "/convo/api";
  
 // ---------- Elements ----------
 const chatEl = document.querySelector(".conversation");
