@@ -14,11 +14,11 @@ const infoBox = document.querySelector('.info');
 
 let sessionId = localStorage.getItem("session_id") || null;
 
-infoBox.append("View and rate the full conversation: ");
+infoBox.append("Instructor View: ");
 
 const link = document.createElement("a");
 link.href = `https://cogsciresearch.vassar.edu/convo/teacher/#student/${sessionId}`;
-link.textContent = "Instructor Website";
+link.textContent = `student-${sessionId}`;
 link.target = "_blank";
 
 infoBox.appendChild(link);
