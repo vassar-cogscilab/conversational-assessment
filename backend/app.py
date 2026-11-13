@@ -6,6 +6,7 @@ import uuid
 import random
 import secrets
 from pathlib import Path
+import hmac
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -392,8 +393,8 @@ def guess_summary():
 def require_admin():
     if not ADMIN_TOKEN:
         return jsonify(error="admin_not_configured"), 500
-    token = request.headers.get("X-Admin-Token") or request.args.get("token")
-    if token != ADMIN_TOKEN:
+    token = request.headers.get("X-Admin-Token", "")
+    if not hmac.compare_digest(token.encode(), ADMIN_TOKEN.encode()):
         return jsonify(error="unauthorized"), 401
     return None
 

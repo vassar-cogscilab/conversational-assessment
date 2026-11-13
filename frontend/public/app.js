@@ -14,7 +14,14 @@ const infoBox = document.querySelector('.info');
 
 let sessionId = localStorage.getItem("session_id") || null;
 
-infoBox.textContent = "Session ID: " + sessionId;
+infoBox.append("View and rate the full conversation: ");
+
+const link = document.createElement("a");
+link.href = `https://cogsciresearch.vassar.edu/convo/teacher/#student/${sessionId}`;
+link.textContent = "Instructor Website";
+link.target = "_blank";
+
+infoBox.appendChild(link);
 
 const local = ["127.0.0.1", "localhost"].includes(location.hostname)
   ? "http://127.0.0.1:3001"
