@@ -31,7 +31,7 @@ function safeSet(key, value) {
 let adminToken = null;
 try { adminToken = sessionStorage.getItem("admin_token"); } catch {}
 
-function askForAdminToken() {
+function askForAdminToken(message = "") {
   return new Promise(resolve => {
     const overlay = document.createElement("div");
     overlay.style.cssText =
@@ -53,6 +53,12 @@ function askForAdminToken() {
     btn.textContent = "Continue";
 
     form.append(label, input, btn);
+    if (message) {
+      const note = document.createElement("p");
+      note.textContent = message;
+      note.style.cssText = "margin:0;color:#b00020";
+      form.append(note);
+    }
     overlay.appendChild(form);
     document.body.appendChild(overlay);
     input.focus();
@@ -67,28 +73,28 @@ function askForAdminToken() {
   });
 }
 
-async function ensureAdminToken() {
+async function ensureAdminToken(message = "") {
   if (!adminToken) {
-    adminToken = await askForAdminToken();
+    adminToken = await askForAdminToken(message);
     try { sessionStorage.setItem("admin_token", adminToken); } catch {}
   }
   return adminToken;
 }
 
-// On a 401 the stored token is wrong: clear it, ask again, and retry once.
+// On a 401 the token is wrong: forget it and ask again, until the server accepts one.
 async function adminFetch(path) {
-  let res;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const token = await ensureAdminToken();
-    res = await fetch(`${local}${path}`, {
+  let message = "";
+  while (true) {
+    const token = await ensureAdminToken(message);
+    const res = await fetch(`${local}${path}`, {
       method: "GET",
       headers: { "X-Admin-Token": token },
     });
     if (res.status !== 401) return res;
     adminToken = null;
     try { sessionStorage.removeItem("admin_token"); } catch {}
+    message = "That token was not accepted. Please try again.";
   }
-  return res;
 }
 
 function getRaterId() {
@@ -351,12 +357,26 @@ async function loadSession(id) {
 }
 
 // ---------- Startup ----------
+// The page starts locked (<body class="locked"> hides everything). It is only
+// unlocked once the server has accepted the admin token.
+function showLockedMessage(text) {
+  let el = document.getElementById("locked-message");
+  if (!el) {
+    el = document.createElement("p");
+    el.id = "locked-message";
+    el.style.cssText = "padding:24px;font-family:sans-serif";
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+}
+
 async function init() {
   syncRatingState(); // correct lock state immediately, before any network call
   try {
     const res = await adminFetch("/admin/sessions");
     if (!res.ok) throw new Error("Failed to load sessions: " + res.status);
     const data = await res.json();
+    document.body.classList.remove("locked"); // token accepted: reveal the page
 
     data.sessions.forEach(s => {
       appendConversation(
@@ -371,6 +391,9 @@ async function init() {
     else markActiveConversation();
   } catch (err) {
     console.error(err);
+    if (document.body.classList.contains("locked")) {
+      showLockedMessage("Couldn't load the instructor page. Check your connection and reload.");
+    }
   }
 }
 

@@ -239,12 +239,12 @@ def health():
 
 @app.post("/chat")
 def chat():
-    body = request.get_json() or {}
+    body = request.get_json(silent=True) or {}
     session_id = body.get("session_id")
     user_input = body.get("input")
 
-    # No session_id (or unknown one) + no input => start a new session
-    if not session_id or session_id not in sessions:
+    # No session id at all: start a new session
+    if not session_id:
         session_id = str(uuid.uuid4())
         sessions[session_id] = {
             "messages": list(BASE_MESSAGES),
@@ -261,7 +261,12 @@ def chat():
             turns=0,
         )
 
-    # Otherwise, treat it as a normal turn
+    if session_id not in sessions:
+        return jsonify(error="session_not_found"), 404
+
+    if not isinstance(user_input, str) or not user_input.strip():
+        return jsonify(error="empty_input"), 400
+
     session = sessions[session_id]
 
     rag_blocks = get_rag_context(user_input)

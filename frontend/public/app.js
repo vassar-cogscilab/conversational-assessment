@@ -12,21 +12,42 @@ const instructionBox = document.querySelector('.instructions');
 
 const infoBox = document.querySelector('.info');
 
-let sessionId = localStorage.getItem("session_id") || null;
-
-infoBox.append("Instructor View: ");
-
-const link = document.createElement("a");
-link.href = `https://cogsciresearch.vassar.edu/convo/teacher/#student/${sessionId}`;
-link.textContent = `student-${sessionId}`;
-link.target = "_blank";
-
-infoBox.appendChild(link);
-
 const local = ["127.0.0.1", "localhost"].includes(location.hostname)
   ? "http://127.0.0.1:3001"
   : "api";
 
+// Older versions could save the text "null" or "undefined" as the session id,
+// so treat those as "no session".
+const savedId = localStorage.getItem("session_id");
+let sessionId = savedId && savedId !== "null" && savedId !== "undefined" ? savedId : null;
+
+// ---------- Session id + instructor link ----------
+// The link is rebuilt every time the session id changes, so it never shows a
+// stale id (or "null") after a new session starts.
+function renderSessionInfo() {
+  infoBox.replaceChildren("Instructor View: ");
+  if (!sessionId) {
+    infoBox.append("starting a session…");
+    return;
+  }
+  const link = document.createElement("a");
+  // Relative to this page, so it works locally and at /convo/ on the server
+  link.href = `teacher/#student/${encodeURIComponent(sessionId)}`;
+  link.textContent = `student-${sessionId}`;
+  link.target = "_blank";
+  link.rel = "noopener";
+  infoBox.appendChild(link);
+}
+
+function setSessionId(id) {
+  sessionId = id;
+  localStorage.setItem("session_id", id);
+  renderSessionInfo();
+}
+
+renderSessionInfo();
+
+// ---------- Instructions panel ----------
 function showInitialView() {
   if (localStorage.getItem("seen_instructions") == "false") {
     instructionBox.style.display = "flex";
@@ -45,51 +66,64 @@ continueBtn.addEventListener("click", () => {
   instructionBox.style.display = "none";
 });
 
-function appendMessage(role, content) {
+// ---------- Messages ----------
+function renderMessage(role, content) {
   const div = document.createElement("div");
   div.className = "message " + role;
   div.textContent = content;
   chatEl.appendChild(div);
+  chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
+}
+
+// persist = false for notices that shouldn't come back after a reload
+function appendMessage(role, content, persist = true) {
+  renderMessage(role, content);
+  if (!persist) return;
 
   const history = JSON.parse(localStorage.getItem("chat_display") || "[]");
   history.push({ role, content });
   localStorage.setItem("chat_display", JSON.stringify(history));
 }
 
+// ---------- Sessions ----------
 async function startNewSession() {
   const res = await fetch(`${local}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ session_id: null, input: null }),
   });
+  if (!res.ok) throw new Error("Could not start a session (" + res.status + ")");
+
   const data = await res.json();
-  sessionId = data.session_id;
-  localStorage.setItem("session_id", sessionId);
+  if (!data.session_id) throw new Error("Server did not return a session id");
+
   localStorage.removeItem("chat_display");
   chatEl.innerHTML = "";
+  setSessionId(data.session_id);
   appendMessage("assistant", data.server_message);
-  sessionId = localStorage.getItem("session_id") || null;
 }
 
 window.onload = async function () {
-  const stored = localStorage.getItem("chat_display");
   localStorage.setItem("seen_instructions", "false");
   showInitialView();
-  if (stored && sessionId) {
-    JSON.parse(stored).forEach(msg => {
-        chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
 
-        const div = document.createElement("div");
-        div.className = "message " + msg.role;
-        div.textContent = msg.content;
-        chatEl.appendChild(div);
-    });
-    chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
-  } else {
-    await startNewSession();
+  try {
+    let history = null;
+    try { history = JSON.parse(localStorage.getItem("chat_display") || "null"); } catch {}
+
+    if (sessionId && Array.isArray(history) && history.length) {
+      history.forEach(msg => renderMessage(msg.role, msg.content));
+      renderSessionInfo();
+    } else {
+      await startNewSession();
+    }
+  } catch (err) {
+    console.error("Error:", err);
+    appendMessage("assistant", "Error: Could not reach the backend AI server.", false);
   }
 };
 
+// ---------- Input ----------
 inputField.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -102,6 +136,7 @@ chatForm.addEventListener("submit", async function (e) {
 
   const userInputValue = inputField.value.trim();
   if (!userInputValue) return;
+  if (!sessionId) return; // still starting up
 
   appendMessage("user", userInputValue);
   inputField.value = "";
@@ -123,7 +158,15 @@ chatForm.addEventListener("submit", async function (e) {
     typingEl.remove();
 
     if (res.status === 404) {
+      // The server no longer knows this session (for example it was reset).
+      // Start a fresh one and give the person their text back.
       await startNewSession();
+      appendMessage(
+        "assistant",
+        "Your earlier session had expired, so a new conversation was started. Please send your message again.",
+        false
+      );
+      inputField.value = userInputValue;
       return;
     }
 
@@ -143,7 +186,12 @@ chatForm.addEventListener("submit", async function (e) {
 
 clearBtn.addEventListener("click", async function () {
   if (!confirm("Are you sure you want to start a new chat? Your current session will be cleared.")) return;
-  await startNewSession();
+  try {
+    await startNewSession();
+  } catch (err) {
+    console.error("Error:", err);
+    appendMessage("assistant", "Error: Could not start a new session. Please try again.", false);
+  }
 });
 
 printBtn.addEventListener("click", function () {
