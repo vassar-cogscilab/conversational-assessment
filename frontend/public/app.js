@@ -24,6 +24,7 @@ let sessionId = savedId && savedId !== "null" && savedId !== "undefined" ? saved
 // ---------- Session id + instructor link ----------
 // The link is rebuilt every time the session id changes, so it never shows a
 // stale id (or "null") after a new session starts.
+/*
 function renderSessionInfo() {
   infoBox.replaceChildren("Instructor View: ");
   if (!sessionId) {
@@ -38,14 +39,15 @@ function renderSessionInfo() {
   link.rel = "noopener";
   infoBox.appendChild(link);
 }
+  */
 
 function setSessionId(id) {
   sessionId = id;
   localStorage.setItem("session_id", id);
-  renderSessionInfo();
+  /* renderSessionInfo(); */
 }
 
-renderSessionInfo();
+/* renderSessionInfo(); */
 
 // ---------- Instructions panel ----------
 function showInitialView() {
@@ -113,7 +115,7 @@ window.onload = async function () {
 
     if (sessionId && Array.isArray(history) && history.length) {
       history.forEach(msg => renderMessage(msg.role, msg.content));
-      renderSessionInfo();
+      /*renderSessionInfo();*/
     } else {
       await startNewSession();
     }
